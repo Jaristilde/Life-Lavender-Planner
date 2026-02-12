@@ -13,7 +13,9 @@ import {
   Plus,
   BarChart3,
   BookOpen,
-  CalendarCheck
+  CalendarCheck,
+  Sunrise,
+  Library as LibraryIcon
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -39,6 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'morningReset', label: 'Morning Reset', icon: Sunrise },
     { id: 'tracking', label: 'Tracking Center', icon: BarChart3 },
     { id: 'financial', label: 'Financial Hub', icon: Wallet },
     { id: 'wellness', label: 'Wellness Tracker', icon: Heart },
@@ -48,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'monthlyReset', label: 'Monthly Reset', icon: CalendarCheck },
     { id: 'workbook', label: 'Money Reset', icon: BookOpen },
     { id: 'reflections', label: 'Reflections', icon: History },
+    { id: 'library', label: 'Library', icon: LibraryIcon },
   ];
 
   const NavLink = ({ id, label, icon: Icon }: any) => (
@@ -109,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          <nav className="flex-1 space-y-1">
+          <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block px-4">Menu</label>
             {navItems.map(item => (
               <NavLink key={item.id} {...item} />

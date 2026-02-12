@@ -54,6 +54,16 @@
       .workbook-input:focus {
         border-color: var(--primary-lavender);
       }
+      /* Shimmer animation for loading states */
+      .animate-shimmer {
+        background: linear-gradient(90deg, #F8F7FC 25%, #E6D5F0 50%, #F8F7FC 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+      }
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
     </style>
   <script type="importmap">
 {
@@ -64,7 +74,8 @@
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "recharts": "https://esm.sh/recharts@^3.7.0",
     "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
-    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@^2.39.0"
   }
 }
 </script>

@@ -179,5 +179,7 @@ export const INITIAL_YEAR_DATA = (year: number): YearData => ({
     prompts: [],
     lessons: '',
     gratitude: ''
-  }
+  },
+  dailyMorningResets: {},
+  library: []
 });

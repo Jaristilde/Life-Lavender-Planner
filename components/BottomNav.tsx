@@ -3,9 +3,9 @@ import React from 'react';
 import { 
   Home, 
   Wallet, 
-  CalendarDays, 
   Heart, 
-  Menu 
+  Menu,
+  Sunrise
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -18,7 +18,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home },
     { id: 'financial', label: 'Finance', icon: Wallet },
-    { id: 'planner', label: 'Planner', icon: CalendarDays },
+    { id: 'morningReset', label: 'Morning', icon: Sunrise },
     { id: 'wellness', label: 'Wellness', icon: Heart },
     { id: 'more', label: 'More', icon: Menu },
   ];

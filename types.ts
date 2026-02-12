@@ -210,6 +210,25 @@ export interface YearData {
   visionBoard: { images: string[]; wordOfTheYear: string; goals: string[] };
   affirmations: string[];
   reflections: { prompts: string[]; lessons: string; gratitude: string };
+  dailyMorningResets: Record<string, {
+    affirmationShown: string;
+    spending: number;
+    financialIntention: string;
+    financialGratitude: string;
+    priorities: Array<{ id: string; text: string; completed: boolean; priority: 'high' | 'medium' | 'low' }>;
+    mood: string;
+    waterIntake: number;
+    movement: boolean;
+    movementMinutes: number;
+    dailyIntention: string;
+  }>;
+  library: Array<{
+    id: string;
+    title: string;
+    fileName: string;
+    uploadedAt: string;
+    fileData: string;
+  }>;
 }
 
 export interface GoogleSyncSettings {

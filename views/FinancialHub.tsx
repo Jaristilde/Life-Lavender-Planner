@@ -1,20 +1,27 @@
 
 import React, { useState } from 'react';
-import { YearData, Debt } from '../types';
+import { FinancialData, Debt } from '../types';
 import { Plus, Trash2, BrainCircuit, Wallet, PieChart as ChartIcon, CreditCard, X, Save } from 'lucide-react';
 import { generateWeeklyPriorities } from '../services/geminiService';
 
-const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void; isPremium: boolean }> = ({ data, updateData, isPremium }) => {
+interface FinancialHubProps {
+  financialData: FinancialData;
+  updateFinancialData: (data: FinancialData) => void;
+  isPremium: boolean;
+  isArchived?: boolean;
+}
+
+const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinancialData, isPremium, isArchived }) => {
   const [loadingAI, setLoadingAI] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newExpenseType, setNewExpenseType] = useState<'fixed' | 'variable'>('variable');
   const [newExpenseForm, setNewExpenseForm] = useState({ name: '', budget: 0, amount: 0 });
 
-  const f = data.financial;
+  const f = financialData;
 
-  const updateFinancial = (newF: Partial<typeof f>) => {
-    if (data.isArchived) return;
-    updateData({ ...data, financial: { ...f, ...newF } });
+  const updateFinancial = (newF: Partial<FinancialData>) => {
+    if (isArchived) return;
+    updateFinancialData({ ...f, ...newF });
   };
 
   const handleIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +92,6 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Income & Summary */}
         <div className="paper-card p-8 space-y-6">
           <div className="flex items-center gap-3 border-b border-[#eee] pb-4">
             <Wallet className="text-[#B19CD9]" />
@@ -99,7 +105,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
               <input 
                 type="number" 
                 value={f.income}
-                readOnly={data.isArchived}
+                readOnly={isArchived}
                 onChange={handleIncomeChange}
                 className="w-full pl-10 pr-4 py-3 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl text-xl font-bold focus:ring-2 focus:ring-[#B19CD9] outline-none"
               />
@@ -134,7 +140,6 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
           </div>
         </div>
 
-        {/* Expenses List */}
         <div className="paper-card p-8 lg:col-span-2">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
@@ -152,7 +157,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                     <input 
                       className="flex-1 bg-transparent border-none outline-none font-medium"
                       value={exp.name}
-                      readOnly={data.isArchived}
+                      readOnly={isArchived}
                       onChange={(e) => {
                         const newList = [...f.fixedExpenses];
                         newList[idx].name = e.target.value;
@@ -165,7 +170,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                         type="number"
                         className="w-24 pl-6 pr-3 py-1 bg-white border border-[#E6D5F0] rounded-lg outline-none focus:ring-1 focus:ring-[#B19CD9]"
                         value={exp.amount}
-                        readOnly={data.isArchived}
+                        readOnly={isArchived}
                         onChange={(e) => {
                           const newList = [...f.fixedExpenses];
                           newList[idx].amount = Number(e.target.value);
@@ -175,7 +180,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                     </div>
                     <button 
                       onClick={() => updateFinancial({ fixedExpenses: f.fixedExpenses.filter(i => i.id !== exp.id) })}
-                      disabled={data.isArchived}
+                      disabled={isArchived}
                       className="text-gray-300 hover:text-red-400 transition-colors disabled:opacity-30"
                     >
                       <Trash2 size={16} />
@@ -194,7 +199,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                       <input 
                         className="font-bold text-gray-700 bg-transparent border-none focus:outline-none"
                         value={exp.name}
-                        readOnly={data.isArchived}
+                        readOnly={isArchived}
                         onChange={(e) => {
                           const newList = [...f.variableExpenses];
                           newList[idx].name = e.target.value;
@@ -203,7 +208,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                       />
                       <button 
                         onClick={() => updateFinancial({ variableExpenses: f.variableExpenses.filter(i => i.id !== exp.id) })}
-                        disabled={data.isArchived}
+                        disabled={isArchived}
                         className="disabled:opacity-30"
                       >
                         <Trash2 size={14} className="text-gray-300 hover:text-red-400" />
@@ -216,7 +221,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                           type="number"
                           className="w-full text-sm font-medium border-b border-[#eee] focus:border-[#B19CD9] outline-none pb-1"
                           value={exp.budget}
-                          readOnly={data.isArchived}
+                          readOnly={isArchived}
                           onChange={(e) => {
                             const newList = [...f.variableExpenses];
                             newList[idx].budget = Number(e.target.value);
@@ -230,7 +235,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                           type="number"
                           className="w-full text-sm font-medium border-b border-[#eee] focus:border-[#B19CD9] outline-none pb-1"
                           value={exp.amount}
-                          readOnly={data.isArchived}
+                          readOnly={isArchived}
                           onChange={(e) => {
                             const newList = [...f.variableExpenses];
                             newList[idx].amount = Number(e.target.value);
@@ -252,7 +257,6 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
           </div>
         </div>
 
-        {/* Debt Tracker */}
         <div className="paper-card p-8 lg:col-span-3">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -272,7 +276,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                 };
                 updateFinancial({ debts: [...f.debts, newDebt] });
               }}
-              disabled={data.isArchived}
+              disabled={isArchived}
               className="px-4 py-2 bg-[#E6D5F0] text-[#7B68A6] rounded-xl font-bold text-sm hover:bg-[#B19CD9] hover:text-white transition-all disabled:opacity-30"
             >
               Add Debt Account
@@ -285,7 +289,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                 <input 
                   className="text-lg font-bold bg-transparent border-none outline-none mb-4 w-full"
                   value={debt.name}
-                  readOnly={data.isArchived}
+                  readOnly={isArchived}
                   onChange={(e) => {
                     const newList = [...f.debts];
                     newList[idx].name = e.target.value;
@@ -299,7 +303,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                       type="number"
                       className="w-24 text-right font-bold border-b border-transparent focus:border-[#B19CD9] outline-none"
                       value={debt.balance}
-                      readOnly={data.isArchived}
+                      readOnly={isArchived}
                       onChange={(e) => {
                         const newList = [...f.debts];
                         newList[idx].balance = Number(e.target.value);
@@ -314,7 +318,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                         type="number"
                         className="w-12 text-right text-sm border-b border-transparent focus:border-[#B19CD9] outline-none"
                         value={debt.interestRate}
-                        readOnly={data.isArchived}
+                        readOnly={isArchived}
                         onChange={(e) => {
                           const newList = [...f.debts];
                           newList[idx].interestRate = Number(e.target.value);
@@ -328,7 +332,7 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
                 <div className="mt-6 pt-6 border-t border-[#eee]">
                    <button 
                      onClick={() => updateFinancial({ debts: f.debts.filter(d => d.id !== debt.id) })}
-                     disabled={data.isArchived}
+                     disabled={isArchived}
                      className="text-xs font-bold text-red-300 hover:text-red-500 uppercase tracking-widest disabled:opacity-30"
                    >
                      Close Account
@@ -340,7 +344,6 @@ const FinancialHub: React.FC<{ data: YearData; updateData: (d: YearData) => void
         </div>
       </div>
 
-      {/* Add Expense Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="w-full max-w-md bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">

@@ -1,7 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { YearData } from '../types';
-import { Image as ImageIcon, Sparkles, Upload, X, Trash2, Plus, Calendar, Star } from 'lucide-react';
+import { Image as ImageIcon, Sparkles, Upload, X, Trash2, Plus, Calendar, Star, Wand2, Loader2 } from 'lucide-react';
+import { generateVisionImage, isAiEnabled } from '../services/geminiService';
 
 const STOCK_GALLERY = [
   { url: 'https://images.unsplash.com/photo-1436491865332-7a61a109c0f3?auto=format&fit=crop&w=600&q=80', tag: 'Flight' },
@@ -26,6 +27,10 @@ const STOCK_GALLERY = [
 
 const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void }> = ({ data, updateData }) => {
   const [showGallery, setShowGallery] = useState(false);
+  const [showAiModal, setShowAiModal] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImg, setGeneratedImg] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleWordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +65,15 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
     updateData({ ...data, visionBoard: { ...data.visionBoard, images: newList } });
   };
 
+  const handleGenerateAiImage = async () => {
+    if (!aiPrompt.trim()) return;
+    setIsGenerating(true);
+    setGeneratedImg(null);
+    const result = await generateVisionImage(aiPrompt);
+    setGeneratedImg(result);
+    setIsGenerating(false);
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-700 pb-20">
       <header className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -80,6 +94,12 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
             className="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-xl hover:bg-[#F8F7FC] transition-all shadow-sm"
           >
             <Upload size={18} /> Upload Photo
+          </button>
+          <button 
+            onClick={() => setShowAiModal(true)}
+            className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#7B68A6] to-[#B19CD9] text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-md"
+          >
+            <Wand2 size={18} /> Magic Manifest
           </button>
           <button 
             onClick={() => setShowGallery(true)}
@@ -122,7 +142,6 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
         {/* Aesthetic Grids Inspired by Notion Screenshot */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 relative z-10">
           
-          {/* Group Header Template (Visual only to match the vibe) */}
           <div className="col-span-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-8 mb-4">
             {["Work Life", "Relationships", "Dream Career", "Wellness", "Travel"].map(cat => (
               <div key={cat} className="flex items-center gap-2 text-[#8B5E3C] font-bold serif text-lg opacity-60">
@@ -152,11 +171,10 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
             </div>
           ))}
 
-          {/* Empty State Cards */}
           {data.visionBoard.images.length < 12 && Array.from({ length: Math.max(0, 12 - data.visionBoard.images.length) }).map((_, i) => (
             <div 
               key={`empty-${i}`}
-              onClick={() => setShowGallery(true)}
+              onClick={() => setShowAiModal(true)}
               className="aspect-[3/4] rounded-xl border-2 border-dashed border-[#E6D5F0] flex flex-col items-center justify-center text-[#B19CD9] hover:bg-[#F8F7FC] transition-colors cursor-pointer"
             >
               <Plus size={32} className="opacity-20 mb-2" />
@@ -174,6 +192,86 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
           </div>
         )}
       </div>
+
+      {/* AI Generation Modal */}
+      {showAiModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col">
+            <div className="p-8 border-b border-[#eee] flex items-center justify-between bg-gradient-to-r from-[#7B68A6] to-[#B19CD9]">
+              <div className="flex items-center gap-4 text-white">
+                <div className="p-3 bg-white/20 rounded-2xl"><Wand2 size={24} /></div>
+                <div>
+                  <h2 className="text-2xl font-bold serif">Magic Manifest</h2>
+                  <p className="text-xs text-white/70 uppercase tracking-widest font-bold">Dream it, generate it</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowAiModal(false)}
+                className="p-3 hover:bg-white/10 rounded-full transition-colors text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-6">
+              {!generatedImg && !isGenerating ? (
+                <>
+                  <div className="space-y-4">
+                    <label className="text-sm font-bold text-gray-500 uppercase tracking-widest">Describe your dream</label>
+                    <textarea 
+                      className="w-full h-40 p-6 bg-[#F8F7FC] border border-[#E6D5F0] rounded-3xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-lg resize-none italic"
+                      placeholder="e.g. A peaceful workspace in a glass house overlooking the mountains, decorated with lavender flowers and cozy blankets..."
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                    />
+                  </div>
+                  <button 
+                    disabled={!aiPrompt.trim()}
+                    onClick={handleGenerateAiImage}
+                    className="w-full py-5 bg-gradient-to-r from-[#7B68A6] to-[#B19CD9] text-white font-bold rounded-2xl shadow-xl hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                  >
+                    <Sparkles size={20} /> Manifest Vision
+                  </button>
+                </>
+              ) : isGenerating ? (
+                <div className="py-12 flex flex-col items-center text-center space-y-6 animate-pulse">
+                  <div className="relative">
+                    <Loader2 size={80} className="text-[#B19CD9] animate-spin" />
+                    <Sparkles size={24} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[#7B68A6]" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl serif font-bold text-[#7B68A6]">Visualizing your future...</h3>
+                    <p className="text-gray-400 italic">"The universe is aligning your dreams with reality."</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6 animate-in zoom-in-95 duration-500">
+                  <div className="aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
+                    <img src={generatedImg!} alt="Generated Vision" className="w-full h-full object-cover" />
+                  </div>
+                  <div className="flex gap-4">
+                    <button 
+                      onClick={() => setGeneratedImg(null)}
+                      className="flex-1 py-4 border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-2xl hover:bg-[#F8F7FC] transition-all"
+                    >
+                      Try Again
+                    </button>
+                    <button 
+                      onClick={() => {
+                        addImage(generatedImg!);
+                        setShowAiModal(false);
+                      }}
+                      className="flex-1 py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-lg hover:bg-[#B19CD9] transition-all"
+                    >
+                      Add to Board
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Stock Gallery Modal */}
       {showGallery && (

@@ -10,7 +10,10 @@ import {
   History, 
   Settings,
   Plus,
-  ChevronRight
+  ChevronRight,
+  Info,
+  Calendar,
+  Library as LibraryIcon
 } from 'lucide-react';
 
 interface MoreSheetProps {
@@ -49,12 +52,15 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
   if (!isOpen && !isAnimating) return null;
 
   const moreItems = [
+    { id: 'planner', label: 'Planner', icon: Calendar },
     { id: 'tracking', label: 'Tracking Center', icon: BarChart3 },
     { id: 'vision', label: 'Vision Board', icon: Target },
     { id: 'simplify', label: '30-Day Reset', icon: Sparkles },
     { id: 'monthlyReset', label: 'Monthly Reset', icon: CalendarCheck },
     { id: 'workbook', label: 'Money Reset', icon: BookOpen },
     { id: 'reflections', label: 'Reflections', icon: History },
+    { id: 'library', label: 'Library', icon: LibraryIcon },
+    { id: 'about', label: 'About', icon: Info },
   ];
 
   return (
@@ -102,7 +108,7 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
         </div>
 
         {/* Nav Grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 max-h-[40vh] overflow-y-auto custom-scrollbar">
           {moreItems.map(item => (
             <button
               key={item.id}

@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import { FinancialData, WellnessData } from "../types";
 
@@ -231,5 +232,31 @@ Be specific about their numbers. Celebrate progress. Give one actionable suggest
   } catch (error) {
     console.error("AI Monthly Insight Error:", error);
     return `Great work staying intentional this month! Your focus on savings is paying off. Keep it up.`;
+  }
+};
+
+export const generateVisionImage = async (prompt: string): Promise<string | null> => {
+  if (!ai) return null;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash-image',
+      contents: [{ parts: [{ text: `A beautiful, high-quality, aesthetic image of: ${prompt}. Cinematic lighting, soft focus, high resolution, inspiring and manifestation-themed.` }] }],
+      config: {
+        imageConfig: {
+          aspectRatio: "3:4"
+        }
+      }
+    });
+
+    for (const part of response.candidates?.[0]?.content?.parts || []) {
+      if (part.inlineData) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Image Generation Error:", error);
+    return null;
   }
 };
