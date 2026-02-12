@@ -11,7 +11,9 @@ import {
   Settings,
   X,
   Plus,
-  BarChart3
+  BarChart3,
+  BookOpen,
+  CalendarCheck
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -43,6 +45,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'planner', label: 'Planner', icon: Calendar },
     { id: 'vision', label: 'Vision Board', icon: Target },
     { id: 'simplify', label: '30-Day Reset', icon: Sparkles },
+    { id: 'monthlyReset', label: 'Monthly Reset', icon: CalendarCheck },
+    { id: 'workbook', label: 'Money Reset', icon: BookOpen },
     { id: 'reflections', label: 'Reflections', icon: History },
   ];
 
@@ -78,7 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       `}>
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between mb-10">
-            <h1 className="text-2xl serif font-bold text-[#7B68A6]">Lavender Planner</h1>
+            <h1 className="text-2xl serif font-bold text-[#7B68A6]">Reset & Rebuild</h1>
             <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-400">
               <X size={24} />
             </button>

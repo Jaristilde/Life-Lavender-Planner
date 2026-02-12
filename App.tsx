@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import { YearData, AppState, UserDailyMetrics, BlueprintData } from './types';
@@ -12,15 +12,29 @@ import VisionBoard from './views/VisionBoard';
 import SimplifyChallenge from './views/SimplifyChallenge';
 import Reflections from './views/Reflections';
 import TrackingCenter from './views/TrackingCenter';
-import OnboardingBlueprint from './views/OnboardingBlueprint';
+import FinancialWorkbook from './views/FinancialWorkbook';
 import MorningAlignmentModal from './components/MorningAlignmentModal';
+import PremiumOnboarding from './views/PremiumOnboarding';
+import MonthlyReset from './views/MonthlyReset';
 
-const STORAGE_KEY = 'lavender_planner_v1';
+const STORAGE_KEY = 'lavender_planner_premium_v1';
 
 const App: React.FC = () => {
   const [appState, setAppState] = useState<AppState>(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Check for trial expiration on load
+      if (parsed.trialStartDate) {
+        const startDate = new Date(parsed.trialStartDate);
+        const now = new Date();
+        const diffDays = (now.getTime() - startDate.getTime()) / (1000 * 3600 * 24);
+        if (diffDays >= 5) {
+          parsed.isPremium = false;
+        }
+      }
+      return parsed;
+    }
     const currentYear = new Date().getFullYear();
     return {
       years: { [currentYear]: INITIAL_YEAR_DATA(currentYear) },
@@ -31,7 +45,11 @@ const App: React.FC = () => {
         syncFrequency: 'manual',
         showEvents: true,
         isConnected: false
-      }
+      },
+      userName: '',
+      userMood: '',
+      userFeeling: '',
+      trialStartDate: null
     };
   });
 
@@ -43,18 +61,18 @@ const App: React.FC = () => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
   }, [appState]);
 
-  const activeYearData = appState.years[appState.currentYear];
+  const activeYearData = useMemo(() => appState.years[appState.currentYear], [appState]);
 
-  // Check for morning alignment on load (only if onboarding is done)
+  // Check for morning alignment on load
   useEffect(() => {
-    if (activeYearData?.blueprint?.completed) {
+    if (appState.userName && activeYearData) {
       const today = new Date().toISOString().split('T')[0];
       const todayMetrics = activeYearData.dailyMetrics[today];
       if (!todayMetrics || !todayMetrics.morning_alignment_completed) {
         setIsAlignmentModalOpen(true);
       }
     }
-  }, [activeYearData]);
+  }, [appState.userName, activeYearData]);
 
   const updateYearData = useCallback((data: YearData) => {
     setAppState(prev => ({
@@ -94,29 +112,36 @@ const App: React.FC = () => {
     setCurrentView('dashboard');
   };
 
-  const handleBlueprintComplete = (blueprint: BlueprintData) => {
-    updateYearData({
-      ...activeYearData,
-      blueprint
-    });
+  const handleOnboardingComplete = (data: { 
+    userName: string; 
+    userMood: string; 
+    userFeeling: string; 
+    isPremium: boolean;
+    trialStartDate: string | null;
+  }) => {
+    setAppState(prev => ({
+      ...prev,
+      ...data
+    }));
   };
 
-  // If blueprint isn't completed, force the onboarding view
-  if (activeYearData && !activeYearData.blueprint.completed) {
-    return <OnboardingBlueprint onComplete={handleBlueprintComplete} />;
+  if (!appState.userName) {
+    return <PremiumOnboarding onComplete={handleOnboardingComplete} />;
   }
 
   const renderView = () => {
     switch (currentView) {
-      case 'dashboard': return <Dashboard data={activeYearData} updateData={updateYearData} />;
+      case 'dashboard': return <Dashboard data={activeYearData} updateData={updateYearData} setView={setCurrentView} userName={appState.userName} mood={appState.userMood} feeling={appState.userFeeling} />;
       case 'tracking': return <TrackingCenter data={activeYearData} updateData={updateYearData} />;
       case 'financial': return <FinancialHub data={activeYearData} updateData={updateYearData} isPremium={appState.isPremium} />;
       case 'wellness': return <WellnessTracker data={activeYearData} updateData={updateYearData} />;
       case 'planner': return <Planner data={activeYearData} updateData={updateYearData} googleSync={appState.googleSync} updateGoogleSync={updateGoogleSync} />;
       case 'vision': return <VisionBoard data={activeYearData} updateData={updateYearData} />;
       case 'simplify': return <SimplifyChallenge data={activeYearData} updateData={updateYearData} />;
+      case 'monthlyReset': return <MonthlyReset data={activeYearData} updateData={updateYearData} isPremium={appState.isPremium} userName={appState.userName} />;
+      case 'workbook': return <FinancialWorkbook data={activeYearData} updateData={updateYearData} isPremium={appState.isPremium} setView={setCurrentView} />;
       case 'reflections': return <Reflections data={activeYearData} updateData={updateYearData} />;
-      default: return <Dashboard data={activeYearData} updateData={updateYearData} />;
+      default: return <Dashboard data={activeYearData} updateData={updateYearData} setView={setCurrentView} userName={appState.userName} mood={appState.userMood} feeling={appState.userFeeling} />;
     }
   };
 

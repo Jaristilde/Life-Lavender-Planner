@@ -91,6 +91,111 @@ export interface UserDailyMetrics {
   };
 }
 
+export interface MonthlyResetData {
+  snapshot: string[];                    // bullet list of events
+  reflection: {
+    grateful: string;
+    heavy: string;
+    proud: string;
+    wantLess: string;
+  };
+  summary: string;                       // one sentence
+  intentions: {
+    feelings: string[];                  // selected feeling checkboxes
+    goals: string;
+    reminder: string;
+  };
+  financialCheckIn: {
+    moneyIn: number;
+    moneyOut: number;
+    saved: number;
+    debtPaid: number;
+    unexpectedExpense: string;
+    unexpectedAmount: number;
+    bestDecision: string;
+    doDifferently: string;
+    aiInsight: string;
+  };
+  completedAt: string | null;
+}
+
+export interface WorkbookSelfAssessment {
+  ratings: {
+    incomeKnowledge: number;
+    subscriptionAwareness: number;
+    writtenBudget: number;
+    emergencySavings: number;
+    debtPayoff: number;
+    consistentSaving: number;
+    moneyCalmness: number;
+    openConversations: number;
+    goalSpecificity: number;
+    spendingAlignment: number;
+  };
+  reflection: string;
+}
+
+export interface WorkbookFinancialGoal {
+  text: string;
+  amount: number;
+  targetDate: string;
+  strategy: string;
+}
+
+export interface WorkbookSnapshot {
+  income: number;
+  expenses: number;
+  debt: number;
+  savings: number;
+  emergencyFund: number;
+  subscriptionCount: number;
+  creditScore: number;
+  confidence: number;
+  consistency: string;
+}
+
+export interface WorkbookData {
+  started_at: string | null;
+  completed_at: string | null;
+  current_page: number;
+  motivation: string;
+  selfAssessment: WorkbookSelfAssessment;
+  childhoodMessages: string;
+  currentImpact: string;
+  limitingBelief: string;
+  empoweringRewrite: string;
+  idealFinancialLife: string;
+  primaryGoal: { text: string; amount: number; targetDate: string; why: string };
+  supportingGoals: WorkbookFinancialGoal[];
+  financeRelationship: string;
+  pastTools: string;
+  currentMorning: string;
+  morningFeelings: string;
+  ritualEntries: { time: string; activity: string }[];
+  durationMinutes: number;
+  wakeTime: string;
+  bedTime: string;
+  obstacles: string;
+  setupChecklist: {
+    accountCreated: boolean;
+    yearSet: boolean;
+    incomeEntered: boolean;
+    fixedExpensesAdded: boolean;
+    variableBudgetSet: boolean;
+    debtsAdded: boolean;
+    savingsGoalSet: boolean;
+    affirmationAdded: boolean;
+    visionBoardImage: boolean;
+    resetStarted: boolean;
+  };
+  intention1: { text: string; why: string };
+  intention2: { text: string; why: string };
+  workContext: string;
+  spendingHabits: string;
+  day1Snapshot: WorkbookSnapshot;
+  day30Snapshot: WorkbookSnapshot | null;
+}
+
 export interface YearData {
   year: number;
   isArchived: boolean;
@@ -99,6 +204,8 @@ export interface YearData {
   plannerFocus: PlannerFocus;
   dailyMetrics: Record<string, UserDailyMetrics>;
   blueprint: BlueprintData;
+  workbook: WorkbookData;
+  monthlyResets: Record<string, MonthlyResetData>;
   simplifyChallenge: { day: number; completed: boolean; reflection: string }[];
   visionBoard: { images: string[]; wordOfTheYear: string; goals: string[] };
   affirmations: string[];
@@ -118,4 +225,8 @@ export interface AppState {
   currentYear: number;
   isPremium: boolean;
   googleSync: GoogleSyncSettings;
+  userName: string;
+  userMood: string;
+  userFeeling: string;
+  trialStartDate: string | null;
 }

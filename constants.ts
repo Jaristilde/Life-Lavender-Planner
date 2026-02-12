@@ -1,5 +1,5 @@
 
-import { YearData, UserDailyMetrics, BlueprintData } from './types';
+import { YearData, UserDailyMetrics, BlueprintData, WorkbookData, MonthlyResetData } from './types';
 
 export const SIMPLIFY_CHALLENGES = [
   "Declutter one drawer",
@@ -52,6 +52,65 @@ export const DEFAULT_BLUEPRINT = (): BlueprintData => ({
   topIntentions: ['', '']
 });
 
+export const DEFAULT_WORKBOOK = (): WorkbookData => ({
+  started_at: null,
+  completed_at: null,
+  current_page: 0,
+  motivation: '',
+  selfAssessment: {
+    ratings: {
+      incomeKnowledge: 0, subscriptionAwareness: 0, writtenBudget: 0,
+      emergencySavings: 0, debtPayoff: 0, consistentSaving: 0,
+      moneyCalmness: 0, openConversations: 0, goalSpecificity: 0,
+      spendingAlignment: 0
+    },
+    reflection: ''
+  },
+  childhoodMessages: '', currentImpact: '', limitingBelief: '',
+  empoweringRewrite: '', idealFinancialLife: '',
+  primaryGoal: { text: '', amount: 0, targetDate: '', why: '' },
+  supportingGoals: [
+    { text: '', amount: 0, targetDate: '', strategy: '' },
+    { text: '', amount: 0, targetDate: '', strategy: '' },
+    { text: '', amount: 0, targetDate: '', strategy: '' },
+    { text: '', amount: 0, targetDate: '', strategy: '' }
+  ],
+  financeRelationship: '', pastTools: '', currentMorning: '', morningFeelings: '',
+  ritualEntries: [
+    { time: '6:30 AM', activity: '' },
+    { time: '7:00 AM', activity: '' },
+    { time: '7:30 AM', activity: '' }
+  ],
+  durationMinutes: 0, wakeTime: '', bedTime: '', obstacles: '',
+  setupChecklist: {
+    accountCreated: false, yearSet: false, incomeEntered: false,
+    fixedExpensesAdded: false, variableBudgetSet: false, debtsAdded: false,
+    savingsGoalSet: false, affirmationAdded: false, visionBoardImage: false,
+    resetStarted: false
+  },
+  intention1: { text: '', why: '' },
+  intention2: { text: '', why: '' },
+  workContext: '', spendingHabits: '',
+  day1Snapshot: {
+    income: 0, expenses: 0, debt: 0, savings: 0, emergencyFund: 0,
+    subscriptionCount: 0, creditScore: 0, confidence: 0, consistency: ''
+  },
+  day30Snapshot: null
+});
+
+export const DEFAULT_MONTHLY_RESET = (): MonthlyResetData => ({
+  snapshot: ['', '', ''],
+  reflection: { grateful: '', heavy: '', proud: '', wantLess: '' },
+  summary: '',
+  intentions: { feelings: [], goals: '', reminder: '' },
+  financialCheckIn: {
+    moneyIn: 0, moneyOut: 0, saved: 0, debtPaid: 0,
+    unexpectedExpense: '', unexpectedAmount: 0,
+    bestDecision: '', doDifferently: '', aiInsight: ''
+  },
+  completedAt: null
+});
+
 export const DEFAULT_DAILY_METRICS = (date: string): UserDailyMetrics => ({
   date,
   morning_alignment_completed: false,
@@ -99,6 +158,8 @@ export const INITIAL_YEAR_DATA = (year: number): YearData => ({
   },
   dailyMetrics: {},
   blueprint: DEFAULT_BLUEPRINT(),
+  workbook: DEFAULT_WORKBOOK(),
+  monthlyResets: {},
   simplifyChallenge: Array.from({ length: 30 }, (_, i) => ({
     day: i + 1,
     completed: false,
