@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { Sparkles, ChevronRight, Check, X } from 'lucide-react';
-import { generatePersonalizedAbundanceMessage, generatePersonalizedAffirmations } from '../services/geminiService';
+import { generatePersonalizedAbundanceMessage, generatePersonalizedAffirmations, isAiEnabled } from '../services/geminiService';
 
 interface Props {
   onComplete: (data: { 
@@ -154,7 +153,7 @@ const PremiumOnboarding: React.FC<Props> = ({ onComplete }) => {
             </div>
             <div className="fixed bottom-10 left-6 right-6">
               <button 
-                onClick={() => setStep(5)}
+                onClick={() => setStep(isAiEnabled() ? 5 : 6)}
                 className="w-full py-5 bg-white/90 text-[#7B68A6] font-bold rounded-full shadow-2xl transition-all active:scale-95"
               >
                 Continue
@@ -189,19 +188,25 @@ const PremiumOnboarding: React.FC<Props> = ({ onComplete }) => {
           </div>
         );
       case 6:
+        const affirmationsToDisplay = aiAffirmations.length > 0 ? aiAffirmations : [
+          "I make financial decisions that align with my values and goals.",
+          "Every step I take toward financial clarity builds my confidence.",
+          "I am capable of creating the wealth and peace I deserve."
+        ];
+        
         return (
           <div className="space-y-10 w-full max-w-md mx-auto text-center px-6 animate-in fade-in duration-500">
             <div className="flex justify-center">
               <ButterflyIcon size={80} className="text-white/60" />
             </div>
             <div className="space-y-8 py-4">
-              {isLoadingAi ? (
+              {isLoadingAi && isAiEnabled() ? (
                 <div className="flex flex-col items-center gap-4">
                   <div className="w-8 h-8 border-4 border-white/20 border-t-white rounded-full animate-spin" />
                   <p className="text-white/60 text-sm">Personalizing your path...</p>
                 </div>
               ) : (
-                aiAffirmations.map((aff, i) => (
+                affirmationsToDisplay.map((aff, i) => (
                   <p key={i} className="text-xl text-white serif italic leading-relaxed">
                     "{aff}"
                   </p>

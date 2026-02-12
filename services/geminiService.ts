@@ -1,11 +1,27 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { FinancialData, WellnessData } from "../types";
 
-// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const apiKey = typeof process !== 'undefined' && process.env?.API_KEY 
+  ? process.env.API_KEY 
+  : (typeof (import.meta as any) !== 'undefined' ? (import.meta as any).env?.VITE_GEMINI_API_KEY : null);
+
+let ai: GoogleGenAI | null = null;
+try {
+  if (apiKey) {
+    ai = new GoogleGenAI({ apiKey });
+  }
+} catch (e) {
+  console.warn('Gemini AI not initialized - AI features will be disabled');
+}
+
+export const isAiEnabled = () => !!ai;
 
 export const generateWeeklyPriorities = async (data: FinancialData, name: string) => {
+  if (!ai) {
+    console.warn('AI not available - no API key configured');
+    return [];
+  }
+
   const prompt = `Analyze the following financial data for ${name}:
 - Monthly Income: $${data.income}
 - Fixed Expenses: ${data.fixedExpenses.map(e => `${e.name}: $${e.amount}`).join(', ')}
@@ -41,6 +57,10 @@ Format as a simple JSON array of strings.`;
 };
 
 export const generatePersonalizedAbundanceMessage = async (name: string, mood: string, feeling: string) => {
+  if (!ai) {
+    return `${name}, your choice to focus on ${feeling} today is a powerful foundation for your financial journey. Small, intentional steps lead to lasting stability and freedom.`;
+  }
+
   const prompt = `Generate a warm, 2-3 sentence personalized financial empowerment message for ${name} who is feeling "${mood}" and resonates with "${feeling}". 
   Focus on practical financial confidence and taking ownership of their money story. 
   Do NOT use words like "universe", "manifest", "attract", or "energies". 
@@ -59,6 +79,10 @@ export const generatePersonalizedAbundanceMessage = async (name: string, mood: s
 };
 
 export const generatePersonalizedAffirmations = async (name: string, mood: string, feeling: string) => {
+  if (!ai) {
+    return [];
+  }
+
   const prompt = `Generate 3 personalized financial wellness affirmations for ${name} who values "${feeling}" and is working on their money mindset. 
   Each affirmation should be 1 sentence, first-person present tense, and focused on practical financial confidence. 
   Avoid manifestation clichés. 
@@ -80,15 +104,13 @@ export const generatePersonalizedAffirmations = async (name: string, mood: strin
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("AI Personalized Affirmations Error:", error);
-    return [
-      "I make financial decisions that align with my values.",
-      "Every dollar I save is a vote for my future self.",
-      "I am capable of building the wealth I deserve."
-    ];
+    return [];
   }
 };
 
 export const generateWorkbookAffirmation = async (limitingBelief: string, idealLife: string) => {
+  if (!ai) return [];
+
   const prompt = `Based on this limiting money belief: "${limitingBelief}"
 And this financial life vision: "${idealLife}"
 
@@ -120,6 +142,8 @@ Return as JSON array of 3 strings.`;
 export const generateRitualSuggestion = async (
   currentMorning: string, morningFeelings: string, primaryGoal: string
 ) => {
+  if (!ai) return [];
+
   const prompt = `Create a morning money ritual for someone whose current morning looks like: "${currentMorning}"
 They currently feel: "${morningFeelings}"
 Their top financial goal: "${primaryGoal}"
@@ -158,6 +182,8 @@ Return as JSON array of objects with "time" (string like "6:30 AM") and "activit
 export const generateGoalOptimization = async (
   primaryGoal: string, supportingGoals: string[], income: number, debt: number, savings: number
 ) => {
+  if (!ai) return {};
+
   const prompt = `Analyze these financial goals:
 Primary: ${primaryGoal}
 Supporting: ${supportingGoals.join(', ')}
@@ -187,6 +213,10 @@ Return as JSON with: priorityOrder (array of strings), timelineAnalysis (string)
 export const generateMonthlyInsight = async (
   monthName: string, income: number, expenses: number, saved: number, debtPaid: number, bestDecision: string
 ) => {
+  if (!ai) {
+    return `Great work staying intentional this month! Your focus on savings is paying off. Keep it up.`;
+  }
+
   const prompt = `Provide a brief, encouraging 2-3 sentence financial insight for ${monthName}:
 Income: $${income}, Expenses: $${expenses}, Saved: $${saved}, Debt paid: $${debtPaid}
 Best decision: "${bestDecision}"
