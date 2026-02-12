@@ -2,7 +2,9 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Menu } from 'lucide-react';
 import Sidebar from './components/Sidebar';
-import { YearData, AppState, UserDailyMetrics, BlueprintData } from './types';
+import BottomNav from './components/BottomNav';
+import MoreSheet from './components/MoreSheet';
+import { YearData, AppState, UserDailyMetrics } from './types';
 import { INITIAL_YEAR_DATA, DEFAULT_DAILY_METRICS } from './constants';
 import Dashboard from './views/Dashboard';
 import FinancialHub from './views/FinancialHub';
@@ -56,6 +58,8 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAlignmentModalOpen, setIsAlignmentModalOpen] = useState(false);
+  const [hasCheckedAlignment, setHasCheckedAlignment] = useState(false);
+  const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -63,16 +67,17 @@ const App: React.FC = () => {
 
   const activeYearData = useMemo(() => appState.years[appState.currentYear], [appState]);
 
-  // Check for morning alignment on load
+  // Check for morning alignment on initial load of the day
   useEffect(() => {
-    if (appState.userName && activeYearData) {
+    if (appState.userName && activeYearData && !hasCheckedAlignment) {
       const today = new Date().toISOString().split('T')[0];
       const todayMetrics = activeYearData.dailyMetrics[today];
       if (!todayMetrics || !todayMetrics.morning_alignment_completed) {
         setIsAlignmentModalOpen(true);
       }
+      setHasCheckedAlignment(true);
     }
-  }, [appState.userName, activeYearData]);
+  }, [appState.userName, activeYearData, hasCheckedAlignment]);
 
   const updateYearData = useCallback((data: YearData) => {
     setAppState(prev => ({
@@ -158,18 +163,36 @@ const App: React.FC = () => {
         onAddYear={handleAddYear}
       />
 
-      <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''}`}>
+      <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''} pb-[90px] lg:pb-0`}>
         <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-[#eee] sticky top-0 z-30">
           <h1 className="text-xl serif font-bold text-[#7B68A6]">Reset & Rebuild</h1>
-          <button onClick={() => setIsSidebarOpen(true)} className="p-2 text-[#7B68A6]">
-            <Menu size={24} />
-          </button>
+          {/* Hide Sidebar burger on small screens because we use BottomNav */}
+          <div className="w-10" /> 
         </header>
 
         <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-10">
           {renderView()}
         </div>
       </main>
+
+      {/* Bottom Nav for Mobile & Tablet */}
+      <div className="lg:hidden">
+        <BottomNav 
+          currentView={currentView} 
+          setView={setCurrentView} 
+          onMoreClick={() => setIsMoreSheetOpen(true)}
+        />
+        <MoreSheet 
+          isOpen={isMoreSheetOpen} 
+          onClose={() => setIsMoreSheetOpen(false)}
+          currentView={currentView}
+          setView={setCurrentView}
+          activeYear={appState.currentYear}
+          years={Object.keys(appState.years).map(Number).sort((a,b) => b-a)}
+          onYearChange={(year) => setAppState(prev => ({ ...prev, currentYear: year }))}
+          onAddYear={handleAddYear}
+        />
+      </div>
 
       <MorningAlignmentModal 
         isOpen={isAlignmentModalOpen}

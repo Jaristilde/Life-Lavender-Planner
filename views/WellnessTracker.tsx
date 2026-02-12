@@ -1,11 +1,26 @@
 
 import React, { useState } from 'react';
 import { YearData, Priority } from '../types';
-import { Coffee, Dumbbell, Map, CheckCircle2, Plus, Clock, Trash2, CheckSquare, Square, X } from 'lucide-react';
+import { Coffee, Dumbbell, Map, CheckCircle2, Plus, Clock, Trash2, CheckSquare, Square, X, Sparkles, Footprints, Flame, Timer, Waves, Bike } from 'lucide-react';
+
+const WORKOUT_TYPES = [
+  { name: 'Yoga', icon: <Sparkles size={20} />, color: 'bg-purple-100 text-purple-600' },
+  { name: 'Pilates', icon: <Dumbbell size={20} />, color: 'bg-indigo-100 text-indigo-600' },
+  { name: 'Walking', icon: <Footprints size={20} />, color: 'bg-green-100 text-green-600' },
+  { name: 'Running', icon: <Flame size={20} />, color: 'bg-orange-100 text-orange-600' },
+  { name: 'Strength', icon: <Dumbbell size={20} />, color: 'bg-blue-100 text-blue-600' },
+  { name: 'HIIT', icon: <Timer size={20} />, color: 'bg-red-100 text-red-600' },
+  { name: 'Cycling', icon: <Bike size={20} />, color: 'bg-cyan-100 text-cyan-600' },
+  { name: 'Swimming', icon: <Waves size={20} />, color: 'bg-sky-100 text-sky-600' },
+];
 
 const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => void }> = ({ data, updateData }) => {
   const [newTask, setNewTask] = useState('');
   const [newChecklistItem, setNewChecklistItem] = useState<Record<string, string>>({});
+  const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
+  const [selectedWorkout, setSelectedWorkout] = useState(WORKOUT_TYPES[0]);
+  const [workoutDuration, setWorkoutDuration] = useState(30);
+
   const w = data.wellness;
 
   const updateWellness = (newW: Partial<typeof w>) => {
@@ -32,15 +47,16 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
     });
   };
 
-  const addWorkout = () => {
+  const handleLogWorkout = () => {
     const workout = {
       id: Math.random().toString(),
       date: new Date().toISOString().split('T')[0],
-      type: 'Yoga',
-      duration: 30,
+      type: selectedWorkout.name,
+      duration: workoutDuration,
       completed: true
     };
     updateWellness({ workouts: [workout, ...w.workouts] });
+    setIsWorkoutModalOpen(false);
   };
 
   const addMeTime = (type: string) => {
@@ -158,24 +174,34 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
               <h2 className="text-xl font-bold">Movement Log</h2>
             </div>
             <button 
-              onClick={addWorkout}
-              className="px-4 py-2 bg-[#E6D5F0] text-[#7B68A6] rounded-xl font-bold text-sm hover:bg-[#B19CD9] hover:text-white transition-all"
+              onClick={() => setIsWorkoutModalOpen(true)}
+              className="px-4 py-2 bg-[#E6D5F0] text-[#7B68A6] rounded-xl font-bold text-sm hover:bg-[#B19CD9] hover:text-white transition-all shadow-sm"
             >
               Log Workout
             </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {w.workouts.slice(0, 6).map(workout => (
-              <div key={workout.id} className="p-4 bg-[#F8F7FC] rounded-2xl flex items-center justify-between border border-[#E6D5F0]/30">
+            {w.workouts.map(workout => (
+              <div key={workout.id} className="p-4 bg-[#F8F7FC] rounded-2xl flex items-center justify-between border border-[#E6D5F0]/30 group relative">
                 <div className="flex items-center gap-4">
-                  <div className="p-3 bg-white rounded-xl shadow-sm"><Dumbbell className="text-[#B19CD9]" size={20} /></div>
+                  <div className={`p-3 rounded-xl shadow-sm ${WORKOUT_TYPES.find(t => t.name === workout.type)?.color || 'bg-white text-[#B19CD9]'}`}>
+                    {WORKOUT_TYPES.find(t => t.name === workout.type)?.icon || <Dumbbell size={20} />}
+                  </div>
                   <div>
                     <h4 className="font-bold text-gray-700">{workout.type}</h4>
                     <p className="text-xs text-gray-400">{workout.date} • {workout.duration} mins</p>
                   </div>
                 </div>
-                <div className="bg-[#D1F7E9] text-[#10B981] text-[10px] font-bold px-2 py-1 rounded-full uppercase">Done</div>
+                <div className="flex items-center gap-2">
+                  <div className="bg-[#D1F7E9] text-[#10B981] text-[10px] font-bold px-2 py-1 rounded-full uppercase">Done</div>
+                  <button 
+                    onClick={() => updateWellness({ workouts: w.workouts.filter(ww => ww.id !== workout.id) })}
+                    className="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
               </div>
             ))}
             {w.workouts.length === 0 && (
@@ -341,6 +367,72 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
           </div>
         </div>
       </div>
+
+      {/* Workout Selection Modal */}
+      {isWorkoutModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden">
+            <div className="p-8">
+              <div className="flex justify-between items-center mb-8">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-[#E6D5F0] rounded-xl"><Dumbbell className="text-[#7B68A6]" /></div>
+                  <h2 className="serif text-2xl font-bold text-[#7B68A6]">Log Movement</h2>
+                </div>
+                <button onClick={() => setIsWorkoutModalOpen(false)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                  <X size={20} className="text-gray-400" />
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 block mb-4 text-center">Select Movement Type</label>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {WORKOUT_TYPES.map(type => (
+                      <button 
+                        key={type.name}
+                        onClick={() => setSelectedWorkout(type)}
+                        className={`flex flex-col items-center gap-3 p-4 rounded-2xl border-2 transition-all ${selectedWorkout.name === type.name ? 'border-[#B19CD9] bg-[#B19CD9]/5 text-[#7B68A6]' : 'border-transparent bg-[#F8F7FC] text-gray-400 hover:bg-[#E6D5F0]'}`}
+                      >
+                        <div className={`p-2 rounded-lg ${selectedWorkout.name === type.name ? 'bg-white' : 'bg-gray-100'}`}>
+                          {type.icon}
+                        </div>
+                        <span className="text-xs font-bold">{type.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Duration (Minutes)</label>
+                    <span className="text-xl font-bold text-[#7B68A6]">{workoutDuration} min</span>
+                  </div>
+                  <input 
+                    type="range"
+                    min="5"
+                    max="120"
+                    step="5"
+                    className="w-full h-2 bg-[#F8F7FC] rounded-lg appearance-none cursor-pointer accent-[#B19CD9] border border-[#eee]"
+                    value={workoutDuration}
+                    onChange={(e) => setWorkoutDuration(Number(e.target.value))}
+                  />
+                  <div className="flex justify-between text-[10px] font-bold text-gray-300 uppercase">
+                    <span>5m</span>
+                    <span>120m</span>
+                  </div>
+                </div>
+
+                <button 
+                  onClick={handleLogWorkout}
+                  className="w-full py-4 bg-[#B19CD9] text-white font-bold rounded-2xl hover:bg-[#7B68A6] transition-all shadow-lg shadow-[#B19CD9]/20"
+                >
+                  Log Completed {selectedWorkout.name}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
