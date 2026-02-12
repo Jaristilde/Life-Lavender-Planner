@@ -2,23 +2,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { FinancialData, WellnessData } from "../types";
 
-const apiKey = typeof process !== 'undefined' && process.env?.API_KEY 
-  ? process.env.API_KEY 
-  : (typeof (import.meta as any) !== 'undefined' ? (import.meta as any).env?.VITE_GEMINI_API_KEY : null);
+// Always use const ai = new GoogleGenAI({apiKey: process.env.API_KEY});
+// The API key must be obtained exclusively from the environment variable process.env.API_KEY.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-let ai: GoogleGenAI | null = null;
-try {
-  if (apiKey) {
-    ai = new GoogleGenAI({ apiKey });
-  }
-} catch (e) {
-  console.warn('Gemini AI not initialized - AI features will be disabled');
-}
-
-export const isAiEnabled = () => !!ai;
+export const isAiEnabled = () => !!process.env.API_KEY;
 
 export const generateWeeklyPriorities = async (data: FinancialData, name: string) => {
-  if (!ai) {
+  if (!process.env.API_KEY) {
     console.warn('AI not available - no API key configured');
     return [];
   }
@@ -50,6 +41,7 @@ Format as a simple JSON array of strings.`;
         }
       }
     });
+    // Correctly access .text property directly
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("AI Error:", error);
@@ -58,7 +50,7 @@ Format as a simple JSON array of strings.`;
 };
 
 export const generatePersonalizedAbundanceMessage = async (name: string, mood: string, feeling: string) => {
-  if (!ai) {
+  if (!process.env.API_KEY) {
     return `${name}, your choice to focus on ${feeling} today is a powerful foundation for your financial journey. Small, intentional steps lead to lasting stability and freedom.`;
   }
 
@@ -72,6 +64,7 @@ export const generatePersonalizedAbundanceMessage = async (name: string, mood: s
       model: 'gemini-3-flash-preview',
       contents: prompt,
     });
+    // Correctly access .text property directly
     return response.text;
   } catch (error) {
     console.error("AI Abundance Message Error:", error);
@@ -80,7 +73,7 @@ export const generatePersonalizedAbundanceMessage = async (name: string, mood: s
 };
 
 export const generatePersonalizedAffirmations = async (name: string, mood: string, feeling: string) => {
-  if (!ai) {
+  if (!process.env.API_KEY) {
     return [];
   }
 
@@ -102,6 +95,7 @@ export const generatePersonalizedAffirmations = async (name: string, mood: strin
         }
       }
     });
+    // Correctly access .text property directly
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("AI Personalized Affirmations Error:", error);
@@ -110,7 +104,7 @@ export const generatePersonalizedAffirmations = async (name: string, mood: strin
 };
 
 export const generateWorkbookAffirmation = async (limitingBelief: string, idealLife: string) => {
-  if (!ai) return [];
+  if (!process.env.API_KEY) return [];
 
   const prompt = `Based on this limiting money belief: "${limitingBelief}"
 And this financial life vision: "${idealLife}"
@@ -133,6 +127,7 @@ Return as JSON array of 3 strings.`;
         responseSchema: { type: Type.ARRAY, items: { type: Type.STRING } }
       }
     });
+    // Correctly access .text property directly
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("AI Affirmation Error:", error);
@@ -143,7 +138,7 @@ Return as JSON array of 3 strings.`;
 export const generateRitualSuggestion = async (
   currentMorning: string, morningFeelings: string, primaryGoal: string
 ) => {
-  if (!ai) return [];
+  if (!process.env.API_KEY) return [];
 
   const prompt = `Create a morning money ritual for someone whose current morning looks like: "${currentMorning}"
 They currently feel: "${morningFeelings}"
@@ -173,6 +168,7 @@ Return as JSON array of objects with "time" (string like "6:30 AM") and "activit
         }
       }
     });
+    // Correctly access .text property directly
     return JSON.parse(response.text || "[]");
   } catch (error) {
     console.error("AI Ritual Error:", error);
@@ -183,7 +179,7 @@ Return as JSON array of objects with "time" (string like "6:30 AM") and "activit
 export const generateGoalOptimization = async (
   primaryGoal: string, supportingGoals: string[], income: number, debt: number, savings: number
 ) => {
-  if (!ai) return {};
+  if (!process.env.API_KEY) return {};
 
   const prompt = `Analyze these financial goals:
 Primary: ${primaryGoal}
@@ -204,6 +200,7 @@ Return as JSON with: priorityOrder (array of strings), timelineAnalysis (string)
       contents: prompt,
       config: { responseMimeType: "application/json" }
     });
+    // Correctly access .text property directly
     return JSON.parse(response.text || "{}");
   } catch (error) {
     console.error("AI Goal Error:", error);
@@ -214,7 +211,7 @@ Return as JSON with: priorityOrder (array of strings), timelineAnalysis (string)
 export const generateMonthlyInsight = async (
   monthName: string, income: number, expenses: number, saved: number, debtPaid: number, bestDecision: string
 ) => {
-  if (!ai) {
+  if (!process.env.API_KEY) {
     return `Great work staying intentional this month! Your focus on savings is paying off. Keep it up.`;
   }
 
@@ -228,6 +225,7 @@ Be specific about their numbers. Celebrate progress. Give one actionable suggest
       model: 'gemini-3-flash-preview',
       contents: prompt,
     });
+    // Correctly access .text property directly
     return response.text;
   } catch (error) {
     console.error("AI Monthly Insight Error:", error);
@@ -236,12 +234,14 @@ Be specific about their numbers. Celebrate progress. Give one actionable suggest
 };
 
 export const generateVisionImage = async (prompt: string): Promise<string | null> => {
-  if (!ai) return null;
+  if (!process.env.API_KEY) return null;
 
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',
-      contents: [{ parts: [{ text: `A beautiful, high-quality, aesthetic image of: ${prompt}. Cinematic lighting, soft focus, high resolution, inspiring and manifestation-themed.` }] }],
+      contents: {
+        parts: [{ text: `A beautiful, high-quality, aesthetic image of: ${prompt}. Cinematic lighting, soft focus, high resolution, inspiring and manifestation-themed.` }]
+      },
       config: {
         imageConfig: {
           aspectRatio: "3:4"
@@ -249,9 +249,13 @@ export const generateVisionImage = async (prompt: string): Promise<string | null
       }
     });
 
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        return `data:image/png;base64,${part.inlineData.data}`;
+    // Find the image part in the response as recommended
+    if (response.candidates && response.candidates[0].content.parts) {
+      for (const part of response.candidates[0].content.parts) {
+        if (part.inlineData) {
+          const base64EncodeString: string = part.inlineData.data;
+          return `data:image/png;base64,${base64EncodeString}`;
+        }
       }
     }
     return null;
