@@ -1,0 +1,7 @@
+{
+  "name": "Reset & Rebuild",
+  "description": "A comprehensive multi-year life planning application for women featuring financial management, wellness tracking, and personal development with a calming lavender aesthetic.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
