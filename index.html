@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Reset & Rebuild | Financial Planner • Journal • Life Tracker</title>
+    <title>Lavender Life Planner | Financial Wellness & Life Planning</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -29,19 +29,10 @@
         box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         border-radius: 12px;
       }
-      .custom-scrollbar::-webkit-scrollbar {
-        width: 6px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: var(--light-lavender);
-        border-radius: 10px;
-      }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: var(--primary-lavender);
-      }
+      .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+      .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+      .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--light-lavender); border-radius: 10px; }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--primary-lavender); }
       .workbook-input {
         background: transparent;
         border-bottom: 1px solid var(--light-lavender);
@@ -50,10 +41,7 @@
         outline: none;
         transition: border-color 0.3s;
       }
-      .workbook-input:focus {
-        border-color: var(--primary-lavender);
-      }
-      /* Shimmer animation for loading states */
+      .workbook-input:focus { border-color: var(--primary-lavender); }
       .animate-shimmer {
         background: linear-gradient(90deg, #F8F7FC 25%, #E6D5F0 50%, #F8F7FC 75%);
         background-size: 200% 100%;
@@ -64,15 +52,7 @@
         100% { background-position: -200% 0; }
       }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.563.0",
-    ...
-  }
-}
-</script>
-</head>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
