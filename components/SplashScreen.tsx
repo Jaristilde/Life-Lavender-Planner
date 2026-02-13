@@ -16,14 +16,14 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ fadingOut = false }) => {
       }}
     >
       <div className="relative flex items-center justify-center">
-        <div className="absolute w-44 h-44 animate-ping opacity-10 bg-white rounded-full" />
-        <div className="w-44 h-44 rounded-full flex items-center justify-center relative"
+        <div className="absolute w-48 h-48 animate-ping opacity-10 bg-white rounded-full" />
+        <div className="w-48 h-48 rounded-full overflow-hidden border-4 border-white/20 flex items-center justify-center relative"
           style={{ filter: 'drop-shadow(0 0 30px rgba(255,255,255,0.3))' }}>
           <img
             src="/butterflymainimage.png"
             alt="Lavender Butterfly"
-            className="w-44 h-44 object-contain"
-            style={{ mixBlendMode: 'screen' }}
+            className="w-full h-full object-cover scale-125"
+            style={{ filter: 'brightness(1.1)' }}
           />
         </div>
       </div>

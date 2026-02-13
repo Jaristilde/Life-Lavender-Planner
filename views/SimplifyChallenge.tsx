@@ -16,12 +16,30 @@ const SimplifyChallenge: React.FC<{ data: YearData; updateData: (d: YearData) =>
   const progress = data.simplifyChallenge.filter(c => c.completed).length;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-10 animate-in fade-in duration-700">
-      <header className="text-center space-y-4">
+    <div className="max-w-5xl mx-auto space-y-0 animate-in fade-in duration-700">
+      {/* Banner Image */}
+      <div className="relative w-full h-48 md:h-64 overflow-hidden rounded-t-2xl">
+        <img
+          src="/butterfly1.png"
+          alt="Lavender Butterfly"
+          className="w-full h-full object-cover grayscale-[30%] opacity-80"
+          onError={(e) => {
+            (e.target as HTMLImageElement).style.display = 'none';
+            (e.target as HTMLImageElement).parentElement!.style.background = 'linear-gradient(135deg, #B19CD9 0%, #7B68A6 100%)';
+          }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent flex items-end p-8">
+          <div className="space-y-1">
+            <h2 className="text-4xl serif font-bold text-white">The Reset Challenge</h2>
+            <p className="text-white/70 font-bold uppercase tracking-widest text-xs">30 Days to Simplify Your Life</p>
+          </div>
+        </div>
+      </div>
+
+      <header className="text-center space-y-4 pt-10 px-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#E6D5F0] text-[#7B68A6] rounded-full text-sm font-bold uppercase tracking-widest">
           <Sparkles size={16} /> 30-Day Reset
         </div>
-        <h1 className="text-5xl font-bold">The Reset Challenge</h1>
         <p className="text-gray-500 max-w-2xl mx-auto italic">
           30 tiny actions to declutter your physical space, digital life, and mind. 
           Focus on one task each day to create more room for what truly matters.

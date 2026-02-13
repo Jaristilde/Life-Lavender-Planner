@@ -215,7 +215,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         {/* 1. HEADER AREA */}
         <div className="relative w-full h-48 md:h-64 overflow-hidden">
           <img
-            src="/butterflymainimage.png"
+            src="/butterfly1.png"
             alt="Lavender Butterfly"
             className="w-full h-full object-cover grayscale-[30%] opacity-80"
             onError={(e) => {

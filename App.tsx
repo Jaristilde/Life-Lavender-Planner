@@ -27,6 +27,7 @@ import Chatbot from './views/Chatbot';
 import DatabaseExplorer from './views/DatabaseExplorer';
 import AuthScreen from './views/AuthScreen';
 import SplashScreen from './components/SplashScreen';
+import Welcome from './views/Welcome';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('hasSeenWelcome'));
 
   const saveTimeout = useRef<any>(null);
   const splashStart = useRef(Date.now());
@@ -351,7 +353,7 @@ const App: React.FC = () => {
 
   if (profile && !profile.onboarding_completed) {
     return (
-      <PremiumOnboarding 
+      <PremiumOnboarding
         onComplete={async (data) => {
           const updates = {
             name: data.userName,
@@ -363,8 +365,17 @@ const App: React.FC = () => {
           };
           await dataService.updateProfile(user.id, updates);
           setProfile({ ...profile, ...updates });
-        }} 
+        }}
       />
+    );
+  }
+
+  if (showWelcome) {
+    return (
+      <Welcome onContinue={() => {
+        localStorage.setItem('hasSeenWelcome', 'true');
+        setShowWelcome(false);
+      }} />
     );
   }
 
