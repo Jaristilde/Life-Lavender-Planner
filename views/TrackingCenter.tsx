@@ -56,7 +56,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
     return 'Elevated';
   };
 
-  const streak = Object.values(data?.dailyMetrics || {}).filter(m => (m as UserDailyMetrics)?.morning_alignment_completed).length;
+  const streak = Object.values(data?.dailyMetrics || {}).filter(m => (m as UserDailyMetrics)?.morning_ritual_completed).length;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -79,22 +79,22 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
         <div className="paper-card p-8 bg-gradient-to-br from-white to-[#F8F7FC] border-t-8 border-[#B19CD9]">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-[#E6D5F0] rounded-xl"><Sparkles size={20} className="text-[#7B68A6]" /></div>
-            <h2 className="text-2xl font-bold">Morning Alignment</h2>
+            <h2 className="text-2xl font-bold">Morning Ritual</h2>
           </div>
           
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Intention</label>
-              <p className="text-sm italic text-gray-700">{metrics?.intention_text || 'No intention set yet.'}</p>
+              <p className="text-sm italic text-gray-700">{metrics?.daily_intention || 'No intention set yet.'}</p>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Commitment</label>
               <p className="text-sm font-semibold text-gray-700">{metrics?.focus_commitment || 'No commitment set yet.'}</p>
             </div>
             <div className="pt-4 border-t border-[#eee]">
-               <div className={`p-4 rounded-2xl flex items-center justify-between ${metrics?.morning_alignment_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>
+               <div className={`p-4 rounded-2xl flex items-center justify-between ${metrics?.morning_ritual_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>
                  <span className="text-xs font-bold uppercase tracking-widest">Status</span>
-                 <span className="text-xs font-bold">{metrics?.morning_alignment_completed ? 'Aligned' : 'Pending'}</span>
+                 <span className="text-xs font-bold">{metrics?.morning_ritual_completed ? 'Aligned' : 'Pending'}</span>
                </div>
             </div>
           </div>

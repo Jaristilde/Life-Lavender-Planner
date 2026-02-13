@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import MoreSheet from './components/MoreSheet';
 import { YearData } from './types';
-import { INITIAL_YEAR_DATA } from './constants';
+import { INITIAL_YEAR_DATA, DEFAULT_DAILY_METRICS } from './constants';
 import { authService } from './services/authService';
 import { dataService } from './services/dataService';
 import Dashboard from './views/Dashboard';
@@ -22,6 +22,9 @@ import MonthlyReset from './views/MonthlyReset';
 import MorningReset from './views/MorningReset';
 import Library from './views/Library';
 import About from './views/About';
+import Profile from './views/Profile';
+import Chatbot from './views/Chatbot';
+import DatabaseExplorer from './views/DatabaseExplorer';
 import AuthScreen from './views/AuthScreen';
 import SplashScreen from './components/SplashScreen';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
@@ -169,7 +172,6 @@ const App: React.FC = () => {
         wellness: { ...baseData.wellness, ...(dbYear?.wellness_data || {}) },
         workbook: { ...baseData.workbook, ...(dbYear?.workbook_data || {}) },
         monthlyResets: dbYear?.monthly_resets || {},
-        dailyMorningResets: dbYear?.daily_morning_resets || {},
         visionBoard: { ...baseData.visionBoard, ...(dbYear?.vision_board || {}) },
         simplifyChallenge: (dbYear?.simplify_challenge?.length > 0) ? dbYear.simplify_challenge : baseData.simplifyChallenge,
         reflections: { ...baseData.reflections, ...(dbYear?.reflections || {}) },
@@ -177,6 +179,45 @@ const App: React.FC = () => {
         library: dbYear?.library || [],
         dailyMetrics: dbYear?.daily_todos || {}
       };
+
+      // Migration: merge dailyMorningResets into dailyMetrics
+      const morningResets = dbYear?.daily_morning_resets;
+      if (morningResets && Object.keys(morningResets).length > 0) {
+        console.log('[Migration] Merging dailyMorningResets into dailyMetrics');
+        const emojiToScore: Record<string, number> = { '😊': 7, '😐': 5, '😔': 3, '💪': 8, '😴': 2 };
+        const migratedMetrics = { ...(mergedData.dailyMetrics || {}) };
+
+        for (const [dateKey, reset] of Object.entries(morningResets) as [string, any][]) {
+          const existing = migratedMetrics[dateKey] || DEFAULT_DAILY_METRICS(dateKey);
+          migratedMetrics[dateKey] = {
+            ...existing,
+            affirmation_shown: reset.affirmationShown || existing.affirmation_shown || '',
+            financial_spending: reset.spending ?? existing.financial_spending ?? 0,
+            financial_intention: reset.financialIntention || existing.financial_intention || '',
+            financial_gratitude: reset.financialGratitude || existing.financial_gratitude || '',
+            top_priorities: (reset.priorities?.length > 0) ? reset.priorities : existing.top_priorities,
+            mood_score: emojiToScore[reset.mood] ?? existing.mood_score ?? 5,
+            water_intake: reset.waterIntake ?? existing.water_intake ?? 0,
+            movement_active: reset.movement ?? existing.movement_active ?? false,
+            movement_minutes: reset.movementMinutes ?? existing.movement_minutes ?? 0,
+            daily_intention: reset.dailyIntention || existing.daily_intention || '',
+          };
+        }
+
+        mergedData.dailyMetrics = migratedMetrics;
+
+        // Persist migration: write merged dailyMetrics, clear morning resets
+        try {
+          await dataService.updateYearField(dbYear.id, 'daily_todos', migratedMetrics);
+          await dataService.updateYearField(dbYear.id, 'daily_morning_resets', {});
+          console.log('[Migration] Successfully migrated and cleared dailyMorningResets');
+        } catch (migErr) {
+          console.error('[Migration] Failed to persist migration:', migErr);
+        }
+      }
+
+      // Remove stale dailyMorningResets from merged data
+      delete mergedData.dailyMorningResets;
 
       setActiveYearId(dbYear.id);
       setActiveYearData(mergedData);
@@ -202,7 +243,6 @@ const App: React.FC = () => {
         'wellness_data': 'wellness',
         'workbook_data': 'workbook',
         'monthly_resets': 'monthlyResets',
-        'daily_morning_resets': 'dailyMorningResets',
         'vision_board': 'visionBoard',
         'simplify_challenge': 'simplifyChallenge',
         'reflections': 'reflections',
@@ -302,24 +342,25 @@ const App: React.FC = () => {
     if (!activeYearData) return null;
 
     switch (currentView) {
-      case 'dashboard': 
-        return <Dashboard 
-          data={activeYearData} 
-          updateData={() => {}} 
-          setView={setCurrentView} 
-          userName={profile?.name || 'Friend'} 
-          mood={profile?.mood || 'Good'} 
-          feeling={profile?.feeling || 'Abundance'} 
-        />;
-      case 'morningReset': 
-        return <MorningReset 
+      case 'dashboard':
+        return <Dashboard
           data={activeYearData}
           updateData={(d) => {
-            if (d.dailyMorningResets !== activeYearData.dailyMorningResets) updateYearField('daily_morning_resets', d.dailyMorningResets);
-            if (d.wellness !== activeYearData.wellness) updateYearField('wellness_data', d.wellness);
+            if (d.dailyMetrics !== activeYearData.dailyMetrics) updateYearField('daily_todos', d.dailyMetrics);
           }}
-          isPremium={profile?.is_premium} 
-          userName={profile?.name || 'Friend'} 
+          setView={setCurrentView}
+          userName={profile?.name || 'Friend'}
+          mood={profile?.mood || 'Good'}
+          feeling={profile?.feeling || 'Abundance'}
+        />;
+      case 'morningReset':
+        return <MorningReset
+          data={activeYearData}
+          updateData={(d) => {
+            if (d.dailyMetrics !== activeYearData.dailyMetrics) updateYearField('daily_todos', d.dailyMetrics);
+          }}
+          isPremium={profile?.is_premium}
+          userName={profile?.name || 'Friend'}
         />;
       case 'tracking': 
         return <TrackingCenter 
@@ -385,11 +426,23 @@ const App: React.FC = () => {
             if (d.isArchived !== activeYearData.isArchived) updateYearField('is_archived', d.isArchived);
           }}
         />;
-      case 'library': 
-        return <Library 
+      case 'library':
+        return <Library
           data={activeYearData}
-          updateData={(d) => updateYearField('library', d.library)} 
+          updateData={(d) => updateYearField('library', d.library)}
+          userId={user.id}
         />;
+      case 'profile':
+        return <Profile
+          profile={profile}
+          user={user}
+          onUpdateProfile={async (updates) => {
+            await dataService.updateProfile(user.id, updates);
+            setProfile({ ...profile, ...updates });
+          }}
+        />;
+      case 'database':
+        return <DatabaseExplorer userId={user.id} />;
       case 'about': return <About userName={profile?.name || 'Friend'} />;
       default: return null;
     }
@@ -397,7 +450,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F7FC]">
-      <Sidebar 
+      <Sidebar
         currentView={currentView}
         setView={setCurrentView}
         isOpen={isSidebarOpen}
@@ -406,6 +459,8 @@ const App: React.FC = () => {
         years={allYears.map(y => y.year)}
         onYearChange={(year) => loadUserData(user.id, true)}
         onAddYear={() => {}}
+        isPremium={profile?.is_premium}
+        userName={profile?.name || 'Friend'}
       />
 
       <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''} pb-[90px] lg:pb-0`}>
@@ -431,8 +486,8 @@ const App: React.FC = () => {
 
       <div className="lg:hidden">
         <BottomNav currentView={currentView} setView={setCurrentView} onMoreClick={() => setIsMoreSheetOpen(true)} />
-        <MoreSheet 
-          isOpen={isMoreSheetOpen} 
+        <MoreSheet
+          isOpen={isMoreSheetOpen}
           onClose={() => setIsMoreSheetOpen(false)}
           currentView={currentView}
           setView={setCurrentView}
@@ -440,13 +495,17 @@ const App: React.FC = () => {
           years={allYears.map(y => y.year)}
           onYearChange={() => {}}
           onAddYear={() => {}}
+          isPremium={profile?.is_premium}
+          userName={profile?.name || 'Friend'}
         />
       </div>
 
-      <MorningAlignmentModal 
-        isOpen={false} 
-        onClose={() => {}} 
-        onSave={() => {}} 
+      <Chatbot userId={user.id} userName={profile?.name || 'Friend'} />
+
+      <MorningAlignmentModal
+        isOpen={false}
+        onClose={() => {}}
+        onSave={() => {}}
       />
     </div>
   );

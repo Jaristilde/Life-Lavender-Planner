@@ -113,8 +113,20 @@ export const DEFAULT_MONTHLY_RESET = (): MonthlyResetData => ({
 
 export const DEFAULT_DAILY_METRICS = (date: string): UserDailyMetrics => ({
   date,
-  morning_alignment_completed: false,
-  intention_text: '',
+  morning_ritual_completed: false,
+  daily_intention: '',
+  affirmation_shown: '',
+  mood_score: 5,
+  financial_spending: 0,
+  financial_intention: '',
+  financial_gratitude: '',
+  top_priorities: [
+    { id: '1', text: '', completed: false, priority: 'high' },
+    { id: '2', text: '', completed: false, priority: 'medium' },
+    { id: '3', text: '', completed: false, priority: 'low' }
+  ],
+  water_intake: 0,
+  movement_active: false,
   focus_commitment: '',
   financial_action_text: '',
   self_trust_statement: '',
@@ -144,7 +156,6 @@ export const DEFAULT_DAILY_METRICS = (date: string): UserDailyMetrics => ({
   daily_self_care_act: '',
   self_love_statement: '',
   physical_activity: '',
-  hydration_count: 0,
   tomorrow_focus: ['', ''],
   kanban: {
     todo: [],
@@ -204,6 +215,5 @@ export const INITIAL_YEAR_DATA = (year: number): YearData => ({
     lessons: '',
     gratitude: ''
   },
-  dailyMorningResets: {},
   library: []
 });

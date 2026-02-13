@@ -79,8 +79,17 @@ export interface KanbanItem {
 
 export interface UserDailyMetrics {
   date: string;
-  morning_alignment_completed: boolean;
-  intention_text: string;
+  morning_ritual_completed: boolean;
+  daily_intention: string;
+  affirmation_shown: string;
+  mood_score: number;
+  financial_spending: number;
+  financial_intention: string;
+  financial_gratitude: string;
+  top_priorities: Array<{ id: string; text: string; completed: boolean; priority: Priority }>;
+  water_intake: number;
+  movement_active: boolean;
+  // Kept from original
   focus_commitment: string;
   financial_action_text: string;
   self_trust_statement: string;
@@ -94,7 +103,6 @@ export interface UserDailyMetrics {
     savingsMove: boolean;
     paidDebt: boolean;
   };
-  // Paper Planner Extended Fields
   gratitude: string[];
   daily_goals: { text: string; completed: boolean }[];
   self_care: { text: string; completed: boolean }[];
@@ -102,7 +110,6 @@ export interface UserDailyMetrics {
   daily_self_care_act: string;
   self_love_statement: string;
   physical_activity: string;
-  hydration_count: number;
   tomorrow_focus: string[];
   kanban: {
     todo: KanbanItem[];
@@ -231,7 +238,7 @@ export interface YearData {
   visionBoard: { images: string[]; wordOfTheYear: string; goals: string[] };
   affirmations: string[];
   reflections: { prompts: string[]; lessons: string; gratitude: string };
-  dailyMorningResets: Record<string, {
+  dailyMorningResets?: Record<string, {
     affirmationShown: string;
     spending: number;
     financialIntention: string;

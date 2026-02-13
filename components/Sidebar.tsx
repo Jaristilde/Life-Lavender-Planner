@@ -15,7 +15,12 @@ import {
   BookOpen,
   CalendarCheck,
   Sunrise,
-  Library as LibraryIcon
+  Library as LibraryIcon,
+  MessageCircle,
+  Database,
+  User,
+  Crown,
+  Shield
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -27,6 +32,8 @@ interface SidebarProps {
   years: number[];
   onYearChange: (year: number) => void;
   onAddYear: () => void;
+  isPremium?: boolean;
+  userName?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -37,7 +44,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeYear,
   years,
   onYearChange,
-  onAddYear
+  onAddYear,
+  isPremium,
+  userName
 }) => {
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -52,6 +61,12 @@ const Sidebar: React.FC<SidebarProps> = ({
     { id: 'workbook', label: 'Money Reset', icon: BookOpen },
     { id: 'reflections', label: 'Reflections', icon: History },
     { id: 'library', label: 'Library', icon: LibraryIcon },
+  ];
+
+  const settingsItems = [
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'database', label: 'Database Explorer', icon: Database },
+    { id: 'about', label: 'About', icon: Settings },
   ];
 
   const NavLink = ({ id, label, icon: Icon }: any) => (
@@ -86,14 +101,29 @@ const Sidebar: React.FC<SidebarProps> = ({
         hidden lg:block
       `}>
         <div className="flex flex-col h-full p-6">
-          <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center justify-between mb-6">
             <h1 className="text-2xl serif font-bold text-[#7B68A6]">Lavender Life Planner</h1>
             <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-400">
               <X size={24} />
             </button>
           </div>
 
-          <div className="mb-8">
+          {/* Plan Badge */}
+          <div className={`mb-6 px-4 py-2.5 rounded-xl flex items-center gap-3 ${
+            isPremium
+              ? 'bg-gradient-to-r from-[#D4AF37]/10 to-[#B19CD9]/10 border border-[#D4AF37]/20'
+              : 'bg-[#F8F7FC] border border-[#E6D5F0]'
+          }`}>
+            {isPremium ? <Crown size={16} className="text-[#D4AF37]" /> : <Shield size={16} className="text-[#B19CD9]" />}
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{userName || 'User'}</p>
+              <p className={`text-xs font-bold ${isPremium ? 'text-[#D4AF37]' : 'text-[#7B68A6]'}`}>
+                {isPremium ? 'Premium Plan' : 'Free Plan'}
+              </p>
+            </div>
+          </div>
+
+          <div className="mb-6">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Current Year</label>
             <div className="flex items-center gap-2">
               <select
@@ -118,14 +148,13 @@ const Sidebar: React.FC<SidebarProps> = ({
             {navItems.map(item => (
               <NavLink key={item.id} {...item} />
             ))}
-          </nav>
 
-          <div className="mt-auto pt-6 border-t border-[#eee]">
-            <button className="w-full flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-[#7B68A6] transition-colors">
-              <Settings size={20} />
-              <span className="font-medium">Settings</span>
-            </button>
-          </div>
+            <div className="my-4 border-t border-[#eee]" />
+            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block px-4">Settings</label>
+            {settingsItems.map(item => (
+              <NavLink key={item.id} {...item} />
+            ))}
+          </nav>
         </div>
       </aside>
     </>

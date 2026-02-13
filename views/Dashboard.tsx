@@ -1,9 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { YearData } from '../types';
-import { Sparkles, TrendingUp, CheckCircle, Crown, BookOpen, CalendarCheck } from 'lucide-react';
+import { DEFAULT_DAILY_METRICS } from '../constants';
+import { Sparkles, TrendingUp, CheckCircle, Crown, BookOpen, CalendarCheck, Sunrise, Droplets } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generatePersonalizedAffirmations } from '../services/geminiService';
+import { AnimatedCounter, GlowBorder, TextReveal } from '../components/MagicUI';
 
 interface DashboardProps {
   data: YearData;
@@ -17,6 +19,9 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userName, mood, feeling }) => {
   const [personalAffirmations, setPersonalAffirmations] = useState<string[]>([]);
   const [greeting, setGreeting] = useState('');
+
+  const today = new Date().toISOString().split('T')[0];
+  const todayMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -39,10 +44,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   const fixedExpenses = financial?.fixedExpenses ?? [];
   const variableExpenses = financial?.variableExpenses ?? [];
   const savingsGoals = financial?.savingsGoals ?? [];
-  
-  const wellness = data?.wellness ?? { dailyToDos: [], workouts: [], meTime: [], vacations: [] };
-  const dailyToDos = wellness?.dailyToDos ?? [];
-  
+
   const challenge = data?.simplifyChallenge ?? [];
   const blueprint = data?.blueprint ?? { topIntentions: [], morningRitual: [] };
   const workbook = data?.workbook ?? { current_page: 0 };
@@ -50,7 +52,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
 
   const financialSummary = {
     income: income,
-    expenses: (fixedExpenses || []).reduce((sum, e) => sum + (e?.amount ?? 0), 0) + 
+    expenses: (fixedExpenses || []).reduce((sum, e) => sum + (e?.amount ?? 0), 0) +
               (variableExpenses || []).reduce((sum, e) => sum + (e?.amount ?? 0), 0),
     savings: (savingsGoals || []).reduce((sum, s) => sum + (s?.current ?? 0), 0),
   };
@@ -61,13 +63,34 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
     { name: 'Savings', value: financialSummary.savings },
   ];
 
-  const simplifyProgress = (challenge || []).length > 0 
-    ? Math.round(((challenge || []).filter(c => c?.completed).length / (challenge || []).length) * 100) 
+  const simplifyProgress = (challenge || []).length > 0
+    ? Math.round(((challenge || []).filter(c => c?.completed).length / (challenge || []).length) * 100)
     : 0;
 
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const currentMonthName = months[new Date().getMonth()].toLowerCase();
   const currentMonthReset = monthlyResets?.[currentMonthName];
+
+  // Today's priorities completion
+  const priorities = todayMetrics.top_priorities || [];
+  const completedPriorities = priorities.filter(p => p.completed).length;
+  const totalPriorities = priorities.filter(p => p.text.trim()).length;
+
+  const getMoodColor = (score: number) => {
+    if (score <= 2) return '#EF4444';
+    if (score <= 4) return '#F59E0B';
+    if (score <= 6) return '#EAB308';
+    if (score <= 8) return '#84CC16';
+    return '#22C55E';
+  };
+
+  const getMoodLabel = (score: number) => {
+    if (score <= 2) return 'Struggling';
+    if (score <= 4) return 'Low';
+    if (score <= 6) return 'Okay';
+    if (score <= 8) return 'Good';
+    return 'Great';
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -85,15 +108,17 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         </div>
       </header>
 
-      <div className="paper-card p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 border-none relative overflow-hidden group">
-        <Sparkles size={120} className="absolute -right-10 -bottom-10 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
-        <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7B68A6] mb-6 flex items-center gap-2">
-           Today's Intention Focus
-        </h3>
-        <p className="text-2xl md:text-3xl serif italic text-[#3D2D7C] leading-tight relative z-10 max-w-3xl">
-          "{personalAffirmations?.[0] || 'I am focused on creating a stable and rewarding financial future.'}"
-        </p>
-      </div>
+      <GlowBorder className="w-full" borderRadius="16px" speed={4}>
+        <div className="p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 relative overflow-hidden group rounded-[16px]">
+          <Sparkles size={120} className="absolute -right-10 -bottom-10 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
+          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7B68A6] mb-6 flex items-center gap-2">
+             Today's Intention Focus
+          </h3>
+          <p className="text-2xl md:text-3xl serif italic text-[#3D2D7C] leading-tight relative z-10 max-w-3xl">
+            "<TextReveal text={personalAffirmations?.[0] || 'I am focused on creating a stable and rewarding financial future.'} speed={0.02} />"
+          </p>
+        </div>
+      </GlowBorder>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="paper-card p-6 bg-gradient-to-br from-[#7B68A6]/5 to-[#B19CD9]/5 border-l-8 border-[#7B68A6] cursor-pointer hover:shadow-lg transition-all" onClick={() => setView('monthlyReset')}>
@@ -104,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
              </h3>
            </div>
            <p className="text-lg font-bold text-[#7B68A6]">
-             {currentMonthReset?.completedAt ? `✅ ${months[new Date().getMonth()]} Reset Complete` : `📅 Time for ${months[new Date().getMonth()]} Reset`}
+             {currentMonthReset?.completedAt ? `${months[new Date().getMonth()]} Reset Complete` : `Time for ${months[new Date().getMonth()]} Reset`}
            </p>
            <button className="text-xs font-bold text-[#B19CD9] mt-2 flex items-center gap-1">
              {currentMonthReset?.completedAt ? 'Review your insights' : 'Start your ritual now'} →
@@ -116,16 +141,16 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
             <div className="p-2 bg-[#E6D5F0] rounded-lg text-[#7B68A6]"><TrendingUp size={20} /></div>
             <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Financial Health</h3>
           </div>
-          <p className="text-2xl font-bold">${(financialSummary?.income ?? 0).toLocaleString()}</p>
+          <AnimatedCounter value={financialSummary?.income ?? 0} prefix="$" className="text-2xl font-bold" />
           <p className="text-sm text-gray-500 mt-1">Total Monthly Income</p>
         </div>
 
         <div className="paper-card p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-[#FFEEDD] rounded-lg text-[#FF9933]"><CheckCircle size={20} /></div>
-            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Daily Tasks</h3>
+            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Daily Priorities</h3>
           </div>
-          <p className="text-2xl font-bold">{(dailyToDos || []).filter(t => t?.completed).length} / {(dailyToDos || []).length}</p>
+          <p className="text-2xl font-bold">{completedPriorities} / {totalPriorities || priorities.length}</p>
           <p className="text-sm text-gray-500 mt-1">Completed Today</p>
         </div>
 
@@ -134,7 +159,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
             <div className="p-2 bg-[#D1F7E9] rounded-lg text-[#10B981]"><Sparkles size={20} /></div>
             <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Simplify Streak</h3>
           </div>
-          <p className="text-2xl font-bold">{simplifyProgress}%</p>
+          <AnimatedCounter value={simplifyProgress} suffix="%" className="text-2xl font-bold" />
           <p className="text-sm text-gray-500 mt-1">Challenge Progress</p>
         </div>
       </div>
@@ -187,19 +212,53 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
           </div>
         </div>
 
-        <div className="paper-card p-8">
-          <h2 className="text-2xl font-bold mb-6">My Morning Ritual</h2>
-          <div className="space-y-4">
-            {(blueprint?.morningRitual || []).filter(r => r?.activity).map((ritual, i) => (
-              <div key={i} className="flex gap-4 items-center p-3 bg-[#F8F7FC] rounded-xl border border-[#eee]">
-                <span className="text-[10px] font-bold text-[#B19CD9] w-12">{ritual?.time}</span>
-                <span className="text-sm font-medium text-gray-700">{ritual?.activity}</span>
-              </div>
-            ))}
-            {(!(blueprint?.morningRitual) || (blueprint?.morningRitual || []).every(r => !r?.activity)) && (
-              <p className="text-center text-gray-400 py-8 italic">No ritual planned yet.</p>
-            )}
+        {/* Morning Ritual Status — reads from today's dailyMetrics */}
+        <div className="paper-card p-8 space-y-6">
+          <h2 className="text-2xl font-bold mb-2">My Morning Ritual</h2>
+
+          {/* Ritual status */}
+          <div className={`p-4 rounded-2xl flex items-center gap-3 ${todayMetrics.morning_ritual_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>
+            <Sunrise size={20} />
+            <span className="text-xs font-bold uppercase tracking-widest">
+              {todayMetrics.morning_ritual_completed ? 'Completed Today' : 'Not Yet Completed'}
+            </span>
           </div>
+
+          {/* Today's intention */}
+          {todayMetrics.daily_intention && (
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Today's Intention</span>
+              <p className="text-sm italic text-[#7B68A6]">"{todayMetrics.daily_intention}"</p>
+            </div>
+          )}
+
+          {/* Mood score */}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Mood</span>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: getMoodColor(todayMetrics.mood_score ?? 5) }} />
+              <span className="text-sm font-bold" style={{ color: getMoodColor(todayMetrics.mood_score ?? 5) }}>
+                {getMoodLabel(todayMetrics.mood_score ?? 5)} ({todayMetrics.mood_score ?? 5}/10)
+              </span>
+            </div>
+          </div>
+
+          {/* Water intake */}
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Water</span>
+            <div className="flex items-center gap-1">
+              <Droplets size={16} className="text-[#3B82F6]" />
+              <span className="text-sm font-bold text-[#3B82F6]">{todayMetrics.water_intake ?? 0}/8 cups</span>
+            </div>
+          </div>
+
+          {/* Morning Reset button */}
+          <button
+            onClick={() => setView('morningReset')}
+            className="w-full py-3 bg-[#7B68A6] text-white font-bold rounded-2xl hover:bg-[#B19CD9] transition-all shadow-md text-sm"
+          >
+            {todayMetrics.morning_ritual_completed ? 'Review Today\'s Reset →' : 'Start Morning Reset →'}
+          </button>
         </div>
       </div>
     </div>

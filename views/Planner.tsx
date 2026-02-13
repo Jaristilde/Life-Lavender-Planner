@@ -326,7 +326,10 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             ].map(m => (
               <button
                 key={m.id}
-                onClick={() => updateDailyMetrics(selectedDate, { mood: m.id as any })}
+                onClick={() => {
+                  const moodScoreMap: Record<string, number> = { rough: 2, meh: 4, good: 7, amazing: 9 };
+                  updateDailyMetrics(selectedDate, { mood: m.id as any, mood_score: moodScoreMap[m.id] ?? 5 });
+                }}
                 className="flex flex-col items-center gap-2 group"
               >
                 <div className={`relative w-14 h-14 rounded-full border-2 flex items-center justify-center text-2xl transition-all ${metrics.mood === m.id ? 'bg-[#E6D5F0] border-[#B19CD9] scale-110 shadow-md' : 'border-transparent hover:bg-gray-50'}`}>
@@ -416,8 +419,8 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
                   <button
                     key={i}
-                    onClick={() => updateDailyMetrics(selectedDate, { hydration_count: i === metrics.hydration_count ? i - 1 : i })}
-                    className={`text-xl transition-all ${i <= metrics.hydration_count ? 'scale-110' : 'opacity-30 hover:opacity-60'}`}
+                    onClick={() => updateDailyMetrics(selectedDate, { water_intake: i === metrics.water_intake ? i - 1 : i })}
+                    className={`text-xl transition-all ${i <= metrics.water_intake ? 'scale-110' : 'opacity-30 hover:opacity-60'}`}
                   >
                     💧
                   </button>

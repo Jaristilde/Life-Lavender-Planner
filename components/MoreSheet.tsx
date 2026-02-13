@@ -14,7 +14,12 @@ import {
   Info,
   Calendar,
   Heart,
-  Library as LibraryIcon
+  Library as LibraryIcon,
+  User,
+  Database,
+  MessageCircle,
+  Crown,
+  Shield
 } from 'lucide-react';
 
 interface MoreSheetProps {
@@ -26,17 +31,21 @@ interface MoreSheetProps {
   years: number[];
   onYearChange: (year: number) => void;
   onAddYear: () => void;
+  isPremium?: boolean;
+  userName?: string;
 }
 
-const MoreSheet: React.FC<MoreSheetProps> = ({ 
-  isOpen, 
-  onClose, 
-  currentView, 
+const MoreSheet: React.FC<MoreSheetProps> = ({
+  isOpen,
+  onClose,
+  currentView,
   setView,
   activeYear,
   years,
   onYearChange,
-  onAddYear
+  onAddYear,
+  isPremium,
+  userName
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -62,6 +71,8 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
     { id: 'workbook', label: 'Money Reset', icon: BookOpen },
     { id: 'reflections', label: 'Reflections', icon: History },
     { id: 'library', label: 'Library', icon: LibraryIcon },
+    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'database', label: 'Database Explorer', icon: Database },
     { id: 'about', label: 'About', icon: Info },
   ];
 
@@ -130,8 +141,25 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
           ))}
         </div>
 
-        <div className="mt-8 pt-6 border-t border-[#F0F0F0]">
-          <button className="w-full flex items-center justify-between px-4 py-3 text-gray-500 hover:text-[#7B68A6] transition-colors bg-[#F8F7FC] rounded-xl">
+        <div className="mt-8 pt-6 border-t border-[#F0F0F0] space-y-3">
+          {/* Plan Badge */}
+          <div className={`px-4 py-3 rounded-xl flex items-center gap-3 ${
+            isPremium
+              ? 'bg-gradient-to-r from-[#D4AF37]/10 to-[#B19CD9]/10 border border-[#D4AF37]/20'
+              : 'bg-[#F8F7FC] border border-[#E6D5F0]'
+          }`}>
+            {isPremium ? <Crown size={16} className="text-[#D4AF37]" /> : <Shield size={16} className="text-[#B19CD9]" />}
+            <div className="flex-1">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{userName || 'User'}</p>
+              <p className={`text-xs font-bold ${isPremium ? 'text-[#D4AF37]' : 'text-[#7B68A6]'}`}>
+                {isPremium ? 'Premium Plan' : 'Free Plan'}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => { setView('profile'); onClose(); }}
+            className="w-full flex items-center justify-between px-4 py-3 text-gray-500 hover:text-[#7B68A6] transition-colors bg-[#F8F7FC] rounded-xl"
+          >
             <div className="flex items-center gap-3">
               <Settings size={20} />
               <span className="font-bold text-sm">Account Settings</span>
