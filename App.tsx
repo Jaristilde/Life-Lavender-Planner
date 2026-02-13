@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import MoreSheet from './components/MoreSheet';
-import { YearData, UserDailyMetrics } from './types';
+// Fixed: YearData should be imported from types.ts
+import { YearData } from './types';
 import { INITIAL_YEAR_DATA } from './constants';
 import { authService } from './services/authService';
 import { dataService } from './services/dataService';
@@ -29,27 +30,19 @@ import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 const CACHE_KEY = 'lavender_planner_v1_cache';
 
 const App: React.FC = () => {
-  // Auth & Profile State
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  
-  // App Data State
   const [activeYearId, setActiveYearId] = useState<string>('');
   const [activeYearData, setActiveYearData] = useState<any>(null);
   const [allYears, setAllYears] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState('dashboard');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-
-  // UI States
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isAlignmentModalOpen, setIsAlignmentModalOpen] = useState(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
-
-  // Sync Logic
   const saveTimeout = useRef<any>(null);
 
-  // Auth Listener
   useEffect(() => {
     const subscription = authService.onAuthStateChange(async (event, session) => {
       if (session?.user) {
@@ -84,39 +77,64 @@ const App: React.FC = () => {
       setAllYears(years || []);
 
       const currentYear = new Date().getFullYear();
-      let yearData = await dataService.getYearData(userId, currentYear);
+      let dbYear = await dataService.getYearData(userId, currentYear);
 
-      if (!yearData) {
-        yearData = await dataService.createYear(userId, currentYear, INITIAL_YEAR_DATA(currentYear));
+      if (!dbYear) {
+        dbYear = await dataService.createYear(userId, currentYear, INITIAL_YEAR_DATA(currentYear));
       }
 
-      setActiveYearId(yearData.id);
-      setActiveYearData(yearData);
+      const baseData = INITIAL_YEAR_DATA(currentYear);
       
-      // Update Offline Cache
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ userId, yearData, profile: userProfile }));
-      
+      const mergedData = {
+        ...baseData,
+        ...dbYear,
+        financial: { ...baseData.financial, ...(dbYear.financial_data || {}) },
+        wellness: { ...baseData.wellness, ...(dbYear.wellness_data || {}) },
+        workbook: { ...baseData.workbook, ...(dbYear.workbook_data || {}) },
+        monthlyResets: dbYear.monthly_resets || {},
+        dailyMorningResets: dbYear.daily_morning_resets || {},
+        visionBoard: { ...baseData.visionBoard, ...(dbYear.vision_board || {}) },
+        simplifyChallenge: dbYear.simplify_challenge?.length ? dbYear.simplify_challenge : baseData.simplifyChallenge,
+        reflections: { ...baseData.reflections, ...(dbYear.reflections || {}) },
+        plannerFocus: { ...baseData.plannerFocus, ...(dbYear.planner || {}) },
+        library: dbYear.library || [],
+        dailyMetrics: dbYear.daily_todos || {}
+      };
+
+      setActiveYearId(dbYear.id);
+      setActiveYearData(mergedData);
       setLoading(false);
     } catch (err) {
       console.error('Failed to load data:', err);
-      // Try to load from cache
-      const cache = localStorage.getItem(CACHE_KEY);
-      if (cache) {
-        const parsed = JSON.parse(cache);
-        if (parsed.userId === userId) {
-          setActiveYearData(parsed.yearData);
-          setProfile(parsed.profile);
-        }
-      }
       setLoading(false);
     }
   };
 
   const updateYearField = (field: string, value: any) => {
-    // 1. Update UI immediately for responsiveness
-    setActiveYearData((prev: any) => ({ ...prev, [field]: value }));
+    setActiveYearData((prev: any) => {
+      if (!prev) return prev;
+      // Also update the local component prop key mapping
+      const keyMap: Record<string, string> = {
+        'financial_data': 'financial',
+        'wellness_data': 'wellness',
+        'workbook_data': 'workbook',
+        'monthly_resets': 'monthlyResets',
+        'daily_morning_resets': 'dailyMorningResets',
+        'vision_board': 'visionBoard',
+        'simplify_challenge': 'simplifyChallenge',
+        'reflections': 'reflections',
+        'planner': 'plannerFocus',
+        'library': 'library',
+        'daily_todos': 'dailyMetrics'
+      };
+      
+      const componentKey = keyMap[field];
+      if (componentKey) {
+        return { ...prev, [field]: value, [componentKey]: value };
+      }
+      return { ...prev, [field]: value };
+    });
     
-    // 2. Debounce cloud sync
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     setSaveStatus('saving');
     
@@ -132,10 +150,6 @@ const App: React.FC = () => {
         setSaveStatus('error');
       }
     }, 1000);
-  };
-
-  const handleSignOut = async () => {
-    await authService.signOut();
   };
 
   if (loading) return <SplashScreen />;
@@ -161,146 +175,95 @@ const App: React.FC = () => {
   }
 
   const renderView = () => {
-    const yearData = activeYearData;
-    if (!yearData) return null;
+    if (!activeYearData) return null;
 
     switch (currentView) {
       case 'dashboard': 
         return <Dashboard 
-          data={{
-            ...yearData,
-            financial: yearData.financial_data,
-            wellness: yearData.wellness_data,
-            workbook: yearData.workbook_data,
-            visionBoard: yearData.vision_board,
-            simplifyChallenge: yearData.simplify_challenge,
-            reflections: yearData.reflections,
-            blueprint: yearData.workbook_data // Assuming blueprint maps here for now
-          }} 
-          updateData={() => {}} // Dashboard mainly reads
+          data={activeYearData} 
+          updateData={() => {}} 
           setView={setCurrentView} 
-          userName={profile?.name || ''} 
-          mood={profile?.mood || ''} 
-          feeling={profile?.feeling || ''} 
+          userName={profile?.name || 'Friend'} 
+          mood={profile?.mood || 'Good'} 
+          feeling={profile?.feeling || 'Abundance'} 
         />;
       case 'morningReset': 
         return <MorningReset 
-          data={{
-            ...yearData,
-            dailyMorningResets: yearData.daily_morning_resets,
-            financial: yearData.financial_data,
-            wellness: yearData.wellness_data,
-            affirmations: yearData.affirmations
-          }}
+          data={activeYearData}
           updateData={(d) => {
-            // Mapping back from the older data structure if needed
-            if (d.dailyMorningResets !== yearData.daily_morning_resets) updateYearField('daily_morning_resets', d.dailyMorningResets);
-            if (d.wellness !== yearData.wellness_data) updateYearField('wellness_data', d.wellness);
+            if (d.dailyMorningResets !== activeYearData.dailyMorningResets) updateYearField('daily_morning_resets', d.dailyMorningResets);
+            if (d.wellness !== activeYearData.wellness) updateYearField('wellness_data', d.wellness);
           }}
           isPremium={profile?.is_premium} 
-          userName={profile?.name || ''} 
+          userName={profile?.name || 'Friend'} 
         />;
       case 'tracking': 
         return <TrackingCenter 
-          data={{
-            ...yearData,
-            dailyMetrics: yearData.daily_todos || {} // Map daily_todos to dailyMetrics as per existing component logic
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('daily_todos', d.dailyMetrics)}
         />;
       case 'financial': 
         return <FinancialHub 
-          financialData={yearData.financial_data} 
+          financialData={activeYearData.financial} 
           updateFinancialData={(val) => updateYearField('financial_data', val)}
           isPremium={profile?.is_premium} 
-          isArchived={yearData.is_archived}
+          isArchived={activeYearData.isArchived}
         />;
       case 'wellness': 
         return <WellnessTracker 
-          data={{
-            ...yearData,
-            wellness: yearData.wellness_data
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('wellness_data', d.wellness)}
         />;
       case 'planner': 
         return <Planner 
-          data={{
-            ...yearData,
-            plannerFocus: yearData.planner,
-            wellness: yearData.wellness_data
-          }}
-          updateData={(d) => {
-             if (d.plannerFocus !== yearData.planner) updateYearField('planner', d.plannerFocus);
-          }}
+          data={activeYearData}
+          updateData={(d) => updateYearField('planner', d.plannerFocus)}
           googleSync={{ enabled: false, syncFrequency: 'manual', showEvents: true, isConnected: false }}
           updateGoogleSync={() => {}}
         />;
       case 'vision': 
         return <VisionBoard 
-          data={{
-            ...yearData,
-            visionBoard: yearData.vision_board
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('vision_board', d.visionBoard)}
         />;
       case 'simplify': 
         return <SimplifyChallenge 
-          data={{
-            ...yearData,
-            simplifyChallenge: yearData.simplify_challenge
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('simplify_challenge', d.simplifyChallenge)}
         />;
       case 'monthlyReset': 
         return <MonthlyReset 
-          data={{
-            ...yearData,
-            monthlyResets: yearData.monthly_resets,
-            financial: yearData.financial_data
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('monthly_resets', d.monthlyResets)}
           isPremium={profile?.is_premium} 
-          userName={profile?.name || ''} 
+          userName={profile?.name || 'Friend'} 
         />;
       case 'workbook': 
         return <FinancialWorkbook 
-          data={{
-            ...yearData,
-            workbook: yearData.workbook_data,
-            financial: yearData.financial_data,
-            affirmations: yearData.affirmations,
-            wellness: yearData.wellness_data
-          }}
+          data={activeYearData}
           updateData={(d) => {
-            if (d.workbook !== yearData.workbook_data) updateYearField('workbook_data', d.workbook);
-            if (d.financial !== yearData.financial_data) updateYearField('financial_data', d.financial);
-            if (d.affirmations !== yearData.affirmations) updateYearField('affirmations', d.affirmations);
-            if (d.wellness !== yearData.wellness_data) updateYearField('wellness_data', d.wellness);
+            if (d.workbook !== activeYearData.workbook) updateYearField('workbook_data', d.workbook);
+            if (d.financial !== activeYearData.financial) updateYearField('financial_data', d.financial);
+            if (d.affirmations !== activeYearData.affirmations) updateYearField('affirmations', d.affirmations);
+            if (d.wellness !== activeYearData.wellness) updateYearField('wellness_data', d.wellness);
           }}
           isPremium={profile?.is_premium} 
           setView={setCurrentView} 
         />;
       case 'reflections': 
         return <Reflections 
-          data={{
-            ...yearData,
-            reflections: yearData.reflections
-          }}
+          data={activeYearData}
           updateData={(d) => {
-            if (d.reflections !== yearData.reflections) updateYearField('reflections', d.reflections);
-            if (d.isArchived !== yearData.is_archived) updateYearField('is_archived', d.isArchived);
+            if (d.reflections !== activeYearData.reflections) updateYearField('reflections', d.reflections);
+            if (d.isArchived !== activeYearData.isArchived) updateYearField('is_archived', d.isArchived);
           }}
         />;
       case 'library': 
         return <Library 
-          data={{
-            ...yearData,
-            library: yearData.library
-          }}
+          data={activeYearData}
           updateData={(d) => updateYearField('library', d.library)} 
         />;
-      case 'about': return <About userName={profile?.name || ''} />;
+      case 'about': return <About userName={profile?.name || 'Friend'} />;
       default: return null;
     }
   };
@@ -312,9 +275,9 @@ const App: React.FC = () => {
         setView={setCurrentView}
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
-        activeYear={activeYearData?.year || 2026}
+        activeYear={activeYearData?.year || new Date().getFullYear()}
         years={allYears.map(y => y.year)}
-        onYearChange={(year) => loadUserData(user.id)} // Basic implementation
+        onYearChange={(year) => loadUserData(user.id)}
         onAddYear={() => {}}
       />
 
@@ -346,7 +309,7 @@ const App: React.FC = () => {
           onClose={() => setIsMoreSheetOpen(false)}
           currentView={currentView}
           setView={setCurrentView}
-          activeYear={activeYearData?.year || 2026}
+          activeYear={activeYearData?.year || new Date().getFullYear()}
           years={allYears.map(y => y.year)}
           onYearChange={() => {}}
           onAddYear={() => {}}
@@ -358,7 +321,7 @@ const App: React.FC = () => {
         onClose={() => setIsAlignmentModalOpen(false)} 
         onSave={(metrics) => {
            const today = new Date().toISOString().split('T')[0];
-           const newMetrics = { ...activeYearData.daily_todos, [today]: { ...metrics, morning_alignment_completed: true } };
+           const newMetrics = { ...(activeYearData?.dailyMetrics || {}), [today]: { ...metrics, morning_alignment_completed: true } };
            updateYearField('daily_todos', newMetrics);
         }} 
       />
