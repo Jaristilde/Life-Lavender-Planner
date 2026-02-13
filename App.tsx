@@ -3,7 +3,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import MoreSheet from './components/MoreSheet';
-// Fixed: YearData should be imported from types.ts
 import { YearData } from './types';
 import { INITIAL_YEAR_DATA } from './constants';
 import { authService } from './services/authService';
@@ -27,8 +26,6 @@ import AuthScreen from './views/AuthScreen';
 import SplashScreen from './components/SplashScreen';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
-const CACHE_KEY = 'lavender_planner_v1_cache';
-
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
@@ -39,15 +36,48 @@ const App: React.FC = () => {
   const [currentView, setCurrentView] = useState('dashboard');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [isAlignmentModalOpen, setIsAlignmentModalOpen] = useState(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  
   const saveTimeout = useRef<any>(null);
+  const authChecked = useRef(false);
 
   useEffect(() => {
+    let mounted = true;
+
+    const initAuth = async () => {
+      // Security: Add a global timeout to prevent infinite splash screen
+      const timeout = setTimeout(() => {
+        if (mounted && loading) setLoading(false);
+      }, 5000);
+
+      try {
+        const currentUser = await authService.getUser();
+        if (!mounted) return;
+
+        if (currentUser) {
+          setUser(currentUser);
+          await loadUserData(currentUser.id, mounted);
+        } else {
+          setLoading(false);
+        }
+      } catch (err) {
+        console.error("Auth init failed:", err);
+        if (mounted) setLoading(false);
+      } finally {
+        clearTimeout(timeout);
+      }
+    };
+
+    if (!authChecked.current) {
+      authChecked.current = true;
+      initAuth();
+    }
+
     const subscription = authService.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
       if (session?.user) {
         setUser(session.user);
-        await loadUserData(session.user.id);
+        await loadUserData(session.user.id, mounted);
       } else {
         setUser(null);
         setProfile(null);
@@ -55,50 +85,49 @@ const App: React.FC = () => {
         setLoading(false);
       }
     });
-    
-    authService.getUser().then(async (user) => {
-      if (user) {
-        setUser(user);
-        await loadUserData(user.id);
-      } else {
-        setLoading(false);
-      }
-    });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const loadUserData = async (userId: string) => {
+  const loadUserData = async (userId: string, isMounted: boolean) => {
     try {
       const userProfile = await dataService.getProfile(userId);
+      if (!isMounted) return;
       setProfile(userProfile);
 
       const years = await dataService.getAllYears(userId);
+      if (!isMounted) return;
       setAllYears(years || []);
 
       const currentYear = new Date().getFullYear();
       let dbYear = await dataService.getYearData(userId, currentYear);
 
-      if (!dbYear) {
+      if (!dbYear && isMounted) {
         dbYear = await dataService.createYear(userId, currentYear, INITIAL_YEAR_DATA(currentYear));
       }
 
+      if (!isMounted) return;
+
       const baseData = INITIAL_YEAR_DATA(currentYear);
       
+      // Robust Deep Merge to prevent "undefined reading 0" crashes
       const mergedData = {
         ...baseData,
         ...dbYear,
-        financial: { ...baseData.financial, ...(dbYear.financial_data || {}) },
-        wellness: { ...baseData.wellness, ...(dbYear.wellness_data || {}) },
-        workbook: { ...baseData.workbook, ...(dbYear.workbook_data || {}) },
-        monthlyResets: dbYear.monthly_resets || {},
-        dailyMorningResets: dbYear.daily_morning_resets || {},
-        visionBoard: { ...baseData.visionBoard, ...(dbYear.vision_board || {}) },
-        simplifyChallenge: dbYear.simplify_challenge?.length ? dbYear.simplify_challenge : baseData.simplifyChallenge,
-        reflections: { ...baseData.reflections, ...(dbYear.reflections || {}) },
-        plannerFocus: { ...baseData.plannerFocus, ...(dbYear.planner || {}) },
-        library: dbYear.library || [],
-        dailyMetrics: dbYear.daily_todos || {}
+        financial: { ...baseData.financial, ...(dbYear?.financial_data || {}) },
+        wellness: { ...baseData.wellness, ...(dbYear?.wellness_data || {}) },
+        workbook: { ...baseData.workbook, ...(dbYear?.workbook_data || {}) },
+        monthlyResets: dbYear?.monthly_resets || {},
+        dailyMorningResets: dbYear?.daily_morning_resets || {},
+        visionBoard: { ...baseData.visionBoard, ...(dbYear?.vision_board || {}) },
+        simplifyChallenge: (dbYear?.simplify_challenge?.length > 0) ? dbYear.simplify_challenge : baseData.simplifyChallenge,
+        reflections: { ...baseData.reflections, ...(dbYear?.reflections || {}) },
+        plannerFocus: { ...baseData.plannerFocus, ...(dbYear?.planner || {}) },
+        library: dbYear?.library || [],
+        dailyMetrics: dbYear?.daily_todos || {}
       };
 
       setActiveYearId(dbYear.id);
@@ -106,14 +135,13 @@ const App: React.FC = () => {
       setLoading(false);
     } catch (err) {
       console.error('Failed to load data:', err);
-      setLoading(false);
+      if (isMounted) setLoading(false);
     }
   };
 
   const updateYearField = (field: string, value: any) => {
     setActiveYearData((prev: any) => {
       if (!prev) return prev;
-      // Also update the local component prop key mapping
       const keyMap: Record<string, string> = {
         'financial_data': 'financial',
         'wellness_data': 'wellness',
@@ -277,13 +305,13 @@ const App: React.FC = () => {
         setIsOpen={setIsSidebarOpen}
         activeYear={activeYearData?.year || new Date().getFullYear()}
         years={allYears.map(y => y.year)}
-        onYearChange={(year) => loadUserData(user.id)}
+        onYearChange={(year) => loadUserData(user.id, true)}
         onAddYear={() => {}}
       />
 
       <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''} pb-[90px] lg:pb-0`}>
         <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-[#eee] sticky top-0 z-30">
-          <h1 className="text-xl serif font-bold text-[#7B68A6]">Lavender Life</h1>
+          <h1 className="text-xl serif font-bold text-[#7B68A6]">Reset & Rebuild</h1>
           <div className="flex items-center gap-2">
              {saveStatus === 'saving' && <Loader2 size={16} className="text-[#B19CD9] animate-spin" />}
              {saveStatus === 'saved' && <CheckCircle2 size={16} className="text-green-400" />}
@@ -317,13 +345,9 @@ const App: React.FC = () => {
       </div>
 
       <MorningAlignmentModal 
-        isOpen={isAlignmentModalOpen} 
-        onClose={() => setIsAlignmentModalOpen(false)} 
-        onSave={(metrics) => {
-           const today = new Date().toISOString().split('T')[0];
-           const newMetrics = { ...(activeYearData?.dailyMetrics || {}), [today]: { ...metrics, morning_alignment_completed: true } };
-           updateYearField('daily_todos', newMetrics);
-        }} 
+        isOpen={false} 
+        onClose={() => {}} 
+        onSave={() => {}} 
       />
     </div>
   );

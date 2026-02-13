@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { FinancialData, Debt } from '../types';
 import { Plus, Trash2, BrainCircuit, Wallet, PieChart as ChartIcon, CreditCard, X, Save } from 'lucide-react';

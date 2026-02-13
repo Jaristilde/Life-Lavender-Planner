@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { YearData } from '../types';
 import { Sparkles, TrendingUp, CheckCircle, Crown, BookOpen, CalendarCheck } from 'lucide-react';
