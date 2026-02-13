@@ -43,6 +43,7 @@ const App: React.FC = () => {
 
   const saveTimeout = useRef<any>(null);
   const splashStart = useRef(Date.now());
+  const loadingData = useRef(false);
 
   const finishSplash = () => {
     const elapsed = Date.now() - splashStart.current;
@@ -130,6 +131,11 @@ const App: React.FC = () => {
   }, []);
 
   const loadUserData = async (userId: string, isMounted: boolean) => {
+    if (loadingData.current) {
+      console.log('[Data] Already loading, skipping duplicate call');
+      return;
+    }
+    loadingData.current = true;
     console.log('[Data] Loading user data for:', userId);
     try {
       console.log('[Data] Fetching profile...');
@@ -183,6 +189,8 @@ const App: React.FC = () => {
         setLoadError(msg);
         finishSplash();
       }
+    } finally {
+      loadingData.current = false;
     }
   };
 

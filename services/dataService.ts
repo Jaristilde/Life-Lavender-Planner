@@ -68,6 +68,17 @@ export const dataService = {
       })
       .select()
       .single();
+    // Handle duplicate key (race condition: another call already created this year)
+    if (error && error.code === '23505') {
+      const { data: existing, error: fetchErr } = await supabase
+        .from('years')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('year', year)
+        .single();
+      if (fetchErr) throw fetchErr;
+      return existing;
+    }
     if (error) throw error;
     return data;
   },
