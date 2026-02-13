@@ -215,9 +215,13 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         {/* 1. HEADER AREA */}
         <div className="relative w-full h-48 md:h-64 overflow-hidden">
           <img
-            src="/butterfly.png"
+            src="/butterflymainimage.png"
             alt="Lavender Butterfly"
             className="w-full h-full object-cover grayscale-[30%] opacity-80"
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+              (e.target as HTMLImageElement).parentElement!.style.background = 'linear-gradient(135deg, #B19CD9 0%, #7B68A6 100%)';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent flex items-end p-8">
             <div className="space-y-1">

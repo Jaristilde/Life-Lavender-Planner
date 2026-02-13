@@ -47,8 +47,12 @@ const App: React.FC = () => {
   const saveTimeout = useRef<any>(null);
   const splashStart = useRef(Date.now());
   const loadingData = useRef(false);
+  const splashFinished = useRef(false);
 
   const finishSplash = () => {
+    if (splashFinished.current) return; // idempotent — only run once
+    splashFinished.current = true;
+
     const elapsed = Date.now() - splashStart.current;
     const minDisplay = 1500;
     const remaining = Math.max(0, minDisplay - elapsed);
@@ -74,13 +78,18 @@ const App: React.FC = () => {
     };
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
 
-    // Fallback timeout — if auth takes too long, show auth screen
-    const fallbackTimeout = setTimeout(() => {
-      if (mounted && loading) {
-        console.log('[Auth] Fallback timeout reached, finishing splash');
-        finishSplash();
+    // Hard absolute timeout — force exit splash after 3 seconds no matter what
+    const hardTimeout = setTimeout(() => {
+      if (mounted && !splashFinished.current) {
+        console.log('[Auth] Hard 3s timeout — forcing splash exit');
+        splashFinished.current = true;
+        setSplashFading(true);
+        setTimeout(() => {
+          setSplashVisible(false);
+          setLoading(false);
+        }, 500);
       }
-    }, 4000);
+    }, 3000);
 
     console.log('[Auth] Setting up onAuthStateChange listener');
 
@@ -94,12 +103,12 @@ const App: React.FC = () => {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
             setUser(session.user);
-            clearTimeout(fallbackTimeout);
+            clearTimeout(hardTimeout);
             await loadUserData(session.user.id, mounted);
           } else if (event === 'INITIAL_SESSION') {
             // No session on initial load — show auth screen
             console.log('[Auth] No session found, showing auth screen');
-            clearTimeout(fallbackTimeout);
+            clearTimeout(hardTimeout);
             finishSplash();
           }
         } else if (event === 'SIGNED_OUT') {
@@ -108,7 +117,7 @@ const App: React.FC = () => {
           setProfile(null);
           setActiveYearData(null);
           setLoadError(null);
-          clearTimeout(fallbackTimeout);
+          clearTimeout(hardTimeout);
           finishSplash();
         }
       } catch (err: any) {
@@ -119,7 +128,7 @@ const App: React.FC = () => {
           } else {
             setLoadError(err?.message || err?.msg || 'Connection error');
           }
-          clearTimeout(fallbackTimeout);
+          clearTimeout(hardTimeout);
           finishSplash();
         }
       }
@@ -127,13 +136,13 @@ const App: React.FC = () => {
 
     return () => {
       mounted = false;
-      clearTimeout(fallbackTimeout);
+      clearTimeout(hardTimeout);
       subscription.unsubscribe();
       window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, []);
 
-  const loadUserData = async (userId: string, isMounted: boolean) => {
+  const loadUserData = async (userId: string, isMounted: boolean, targetYear?: number) => {
     if (loadingData.current) {
       console.log('[Data] Already loading, skipping duplicate call');
       return;
@@ -152,7 +161,7 @@ const App: React.FC = () => {
       if (!isMounted) return;
       setAllYears(years || []);
 
-      const currentYear = new Date().getFullYear();
+      const currentYear = targetYear || new Date().getFullYear();
       console.log('[Data] Fetching year data for', currentYear);
       let dbYear = await dataService.getYearData(userId, currentYear);
 
@@ -232,6 +241,27 @@ const App: React.FC = () => {
       }
     } finally {
       loadingData.current = false;
+    }
+  };
+
+  const switchToYear = async (year: number) => {
+    if (!user) return;
+    loadingData.current = false; // reset so loadUserData can proceed
+    await loadUserData(user.id, true, year);
+  };
+
+  const handleAddYear = async () => {
+    if (!user) return;
+    const existingYears = allYears.map(y => y.year);
+    const nextYear = existingYears.length > 0 ? Math.max(...existingYears) + 1 : new Date().getFullYear();
+    try {
+      await dataService.createYear(user.id, nextYear, INITIAL_YEAR_DATA(nextYear));
+      // Refresh years list and switch to the new year
+      const years = await dataService.getAllYears(user.id);
+      setAllYears(years || []);
+      await switchToYear(nextYear);
+    } catch (err) {
+      console.error('[Year] Failed to create year:', err);
     }
   };
 
@@ -457,8 +487,8 @@ const App: React.FC = () => {
         setIsOpen={setIsSidebarOpen}
         activeYear={activeYearData?.year || new Date().getFullYear()}
         years={allYears.map(y => y.year)}
-        onYearChange={(year) => loadUserData(user.id, true)}
-        onAddYear={() => {}}
+        onYearChange={(year) => switchToYear(year)}
+        onAddYear={handleAddYear}
         isPremium={profile?.is_premium}
         userName={profile?.name || 'Friend'}
       />
@@ -493,8 +523,8 @@ const App: React.FC = () => {
           setView={setCurrentView}
           activeYear={activeYearData?.year || new Date().getFullYear()}
           years={allYears.map(y => y.year)}
-          onYearChange={() => {}}
-          onAddYear={() => {}}
+          onYearChange={(year) => switchToYear(year)}
+          onAddYear={handleAddYear}
           isPremium={profile?.is_premium}
           userName={profile?.name || 'Friend'}
         />

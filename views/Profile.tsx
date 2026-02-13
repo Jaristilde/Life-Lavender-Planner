@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, DollarSign, FileText, Bell, Save, CheckCircle2, Loader2, Crown, Shield } from 'lucide-react';
+import { User, Mail, DollarSign, FileText, Bell, Save, CheckCircle2, Loader2, Shield } from 'lucide-react';
+import ButterflyIcon from '../components/ButterflyIcon';
 
 interface ProfileProps {
   profile: any;
@@ -70,7 +71,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => 
           )}
           {isPremium && (
             <div className="absolute -bottom-1 -right-1 bg-[#D4AF37] p-1.5 rounded-full shadow-md">
-              <Crown size={14} className="text-white" />
+              <ButterflyIcon size={14} className="text-white" />
             </div>
           )}
         </div>
@@ -82,7 +83,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => 
               ? 'bg-gradient-to-r from-[#D4AF37]/20 to-[#B19CD9]/20 text-[#D4AF37] border border-[#D4AF37]/30'
               : 'bg-[#F8F7FC] text-[#7B68A6] border border-[#E6D5F0]'
           }`}>
-            {isPremium ? <Crown size={14} /> : <Shield size={14} />}
+            {isPremium ? <ButterflyIcon size={14} /> : <Shield size={14} />}
             {isPremium ? 'Premium Plan' : 'Free Plan'}
           </div>
         </div>

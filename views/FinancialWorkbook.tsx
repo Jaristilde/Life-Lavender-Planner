@@ -1,22 +1,22 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { YearData, WorkbookData, Task, WorkbookSnapshot, WorkbookFinancialGoal } from '../types';
-import { 
-  ChevronRight, 
-  ChevronLeft, 
-  Crown, 
-  Target, 
-  BookOpen, 
-  Sun, 
-  Clock, 
-  Save, 
-  Sparkles, 
+import {
+  ChevronRight,
+  ChevronLeft,
+  Target,
+  BookOpen,
+  Sun,
+  Clock,
+  Save,
+  Sparkles,
   Download,
   CheckCircle2,
   AlertCircle,
   X
 } from 'lucide-react';
 import { generateWorkbookAffirmation, generateRitualSuggestion, generateGoalOptimization } from '../services/geminiService';
+import ButterflyIcon from '../components/ButterflyIcon';
 
 interface Props {
   data: YearData;
@@ -407,7 +407,7 @@ const FinancialWorkbook: React.FC<Props> = ({ data, updateData, isPremium, setVi
             </div>
             
             <div className="p-6 bg-[#D4AF37]/10 rounded-2xl border border-[#D4AF37]/20 flex items-start gap-4">
-              <Crown className="text-[#D4AF37] shrink-0" />
+              <ButterflyIcon className="text-[#D4AF37] shrink-0" />
               <p className="text-xs text-[#7B68A6] leading-relaxed italic">
                 <strong>Pro Tip:</strong> Enter these goals in your Financial Hub. The Debt Payoff Tracker will calculate your timeline, and the AI module can suggest avalanche or snowball strategies.
               </p>
@@ -645,7 +645,7 @@ const FinancialWorkbook: React.FC<Props> = ({ data, updateData, isPremium, setVi
         {page < 9 && showWelcomeContent && (
           <div className="mt-20 flex justify-between items-center print:hidden">
             <button onClick={() => handlePageChange(Math.max(0, page - 1))} disabled={page === 0} className={`flex items-center gap-2 px-6 py-3 font-bold transition-all ${page === 0 ? 'opacity-0 cursor-default' : 'text-gray-400 hover:text-[#7B68A6]'}`}><ChevronLeft size={20} /> Previous</button>
-            {page === 8 ? <button onClick={() => { updateWorkbook({ completed_at: new Date().toISOString() }); handlePageChange(9); }} className="flex items-center gap-3 px-10 py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all">Complete Money Reset <Crown size={20} /></button> : <button onClick={() => handlePageChange(page + 1)} className="flex items-center gap-2 px-10 py-4 bg-[#B19CD9] text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all">Next Step <ChevronRight size={20} /></button>}
+            {page === 8 ? <button onClick={() => { updateWorkbook({ completed_at: new Date().toISOString() }); handlePageChange(9); }} className="flex items-center gap-3 px-10 py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all">Complete Money Reset <ButterflyIcon size={20} /></button> : <button onClick={() => handlePageChange(page + 1)} className="flex items-center gap-2 px-10 py-4 bg-[#B19CD9] text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all">Next Step <ChevronRight size={20} /></button>}
           </div>
         )}
       </div>

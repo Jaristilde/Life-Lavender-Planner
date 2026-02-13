@@ -41,19 +41,19 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
               }
             }}
             className={`flex flex-col items-center justify-center gap-1 min-w-[64px] h-full transition-all active:scale-90 ${
-              isActive ? 'text-[#7B68A6]' : 'text-[#9B8EC4]'
+              isActive ? 'text-[#7B68A6]' : 'text-[#C4B8E0]'
             }`}
           >
             <div className="relative flex flex-col items-center">
               <tab.icon
                 size={24}
-                className={`transition-all ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`}
+                className={`transition-all ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`}
               />
               {isActive && (
                 <div className="absolute -bottom-1.5 w-1 h-1 bg-[#7B68A6] rounded-full" />
               )}
             </div>
-            <span className={`text-[10px] font-bold tracking-tight transition-all ${isActive ? 'opacity-100' : 'opacity-70'}`}>
+            <span className={`text-[10px] font-bold tracking-tight transition-all ${isActive ? 'text-[#7B68A6]' : 'text-[#C4B8E0]'}`}>
               {tab.label}
             </span>
           </button>

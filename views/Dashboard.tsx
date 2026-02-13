@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { YearData } from '../types';
 import { DEFAULT_DAILY_METRICS } from '../constants';
-import { Sparkles, TrendingUp, CheckCircle, Crown, BookOpen, CalendarCheck, Sunrise, Droplets } from 'lucide-react';
+import { Sparkles, TrendingUp, CheckCircle, BookOpen, CalendarCheck, Sunrise, Droplets } from 'lucide-react';
+import ButterflyIcon from '../components/ButterflyIcon';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generatePersonalizedAffirmations } from '../services/geminiService';
-import { AnimatedCounter, GlowBorder, TextReveal } from '../components/MagicUI';
+import { AnimatedCounter, TextReveal } from '../components/MagicUI';
 
 interface DashboardProps {
   data: YearData;
@@ -100,7 +101,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
           <p className="text-[#7B68A6] italic text-lg font-light">"Your blueprint for abundance and mindfulness."</p>
         </div>
         <div className="paper-card p-6 flex items-center gap-4 border-l-8 border-[#B19CD9]">
-          <div className="p-2 bg-[#F8F7FC] rounded-full"><Crown size={24} className="text-[#B19CD9]" /></div>
+          <div className="p-2 bg-[#F8F7FC] rounded-full"><ButterflyIcon size={24} className="text-[#B19CD9]" /></div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Core Intention</p>
             <p className="text-lg font-bold serif italic text-[#7B68A6]">{blueprint?.topIntentions?.[0] || 'Clarity'}</p>
@@ -108,17 +109,15 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         </div>
       </header>
 
-      <GlowBorder className="w-full" borderRadius="16px" speed={4}>
-        <div className="p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 relative overflow-hidden group rounded-[16px]">
-          <Sparkles size={120} className="absolute -right-10 -bottom-10 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
-          <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7B68A6] mb-6 flex items-center gap-2">
-             Today's Intention Focus
-          </h3>
-          <p className="text-2xl md:text-3xl serif italic text-[#3D2D7C] leading-tight relative z-10 max-w-3xl">
-            "<TextReveal text={personalAffirmations?.[0] || 'I am focused on creating a stable and rewarding financial future.'} speed={0.02} />"
-          </p>
-        </div>
-      </GlowBorder>
+      <div className="paper-card p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 border-2 border-[#B19CD9]/30 relative overflow-hidden group">
+        <Sparkles size={120} className="absolute -right-10 -bottom-10 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
+        <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7B68A6] mb-6 flex items-center gap-2">
+           Today's Intention Focus
+        </h3>
+        <p className="text-2xl md:text-3xl serif italic text-[#3D2D7C] leading-tight relative z-10 max-w-3xl">
+          "<TextReveal text={personalAffirmations?.[0] || 'I am focused on creating a stable and rewarding financial future.'} speed={0.02} />"
+        </p>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="paper-card p-6 bg-gradient-to-br from-[#7B68A6]/5 to-[#B19CD9]/5 border-l-8 border-[#7B68A6] cursor-pointer hover:shadow-lg transition-all" onClick={() => setView('monthlyReset')}>

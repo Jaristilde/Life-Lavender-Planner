@@ -121,12 +121,60 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
     setTextDraft('');
   };
 
+  const [matchedImages, setMatchedImages] = useState<typeof LOCAL_GALLERY>([]);
+
   const handleGenerateAiImage = async () => {
     if (!aiPrompt.trim()) return;
     setIsGenerating(true);
     setGeneratedImg(null);
+    setMatchedImages([]);
+
     const result = await generateVisionImage(aiPrompt);
-    setGeneratedImg(result);
+
+    if (result) {
+      setGeneratedImg(result);
+    } else {
+      // Fallback: keyword-match against local gallery
+      const words = aiPrompt.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      const scored = LOCAL_GALLERY.map(img => {
+        let score = 0;
+        const searchText = `${img.tag} ${img.category}`.toLowerCase();
+        for (const word of words) {
+          if (searchText.includes(word)) score += 2;
+        }
+        // Boost common keyword matches
+        if (aiPrompt.toLowerCase().includes('house') || aiPrompt.toLowerCase().includes('home')) {
+          if (img.category === 'Home') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('travel') || aiPrompt.toLowerCase().includes('world')) {
+          if (img.category === 'Travel') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('money') || aiPrompt.toLowerCase().includes('financ') || aiPrompt.toLowerCase().includes('wealth')) {
+          if (img.category === 'Financial') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('career') || aiPrompt.toLowerCase().includes('job') || aiPrompt.toLowerCase().includes('business')) {
+          if (img.category === 'Career') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('health') || aiPrompt.toLowerCase().includes('fitness') || aiPrompt.toLowerCase().includes('gym')) {
+          if (img.category === 'Health') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('family') || aiPrompt.toLowerCase().includes('love')) {
+          if (img.category === 'Family') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('car') || aiPrompt.toLowerCase().includes('driv')) {
+          if (img.category === 'Lifestyle') score += 3;
+        }
+        if (aiPrompt.toLowerCase().includes('school') || aiPrompt.toLowerCase().includes('learn') || aiPrompt.toLowerCase().includes('education')) {
+          if (img.category === 'Education') score += 3;
+        }
+        return { ...img, score };
+      })
+        .filter(img => img.score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 4);
+
+      setMatchedImages(scored);
+    }
     setIsGenerating(false);
   };
 
@@ -367,13 +415,13 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
             </div>
 
             <div className="p-8 space-y-6">
-              {!generatedImg && !isGenerating ? (
+              {!generatedImg && matchedImages.length === 0 && !isGenerating ? (
                 <>
                   <div className="space-y-4">
                     <label className="text-sm font-bold text-gray-500 uppercase tracking-widest">Describe your dream</label>
                     <textarea
                       className="w-full h-40 p-6 bg-[#F8F7FC] border border-[#E6D5F0] rounded-3xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-lg resize-none italic"
-                      placeholder="e.g. A peaceful workspace in a glass house overlooking the mountains, decorated with lavender flowers and cozy blankets..."
+                      placeholder="e.g. Dream house, financial freedom, travel the world, new career..."
                       value={aiPrompt}
                       onChange={(e) => setAiPrompt(e.target.value)}
                     />
@@ -397,14 +445,14 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
                     <p className="text-gray-400 italic">"The universe is aligning your dreams with reality."</p>
                   </div>
                 </div>
-              ) : (
+              ) : generatedImg ? (
                 <div className="space-y-6 animate-in zoom-in-95 duration-500">
                   <div className="aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl border-4 border-white">
-                    <img src={generatedImg!} alt="Generated Vision" className="w-full h-full object-cover" />
+                    <img src={generatedImg} alt="Generated Vision" className="w-full h-full object-cover" />
                   </div>
                   <div className="flex gap-4">
                     <button
-                      onClick={() => setGeneratedImg(null)}
+                      onClick={() => { setGeneratedImg(null); setMatchedImages([]); }}
                       className="flex-1 py-4 border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-2xl hover:bg-[#F8F7FC] transition-all"
                     >
                       Try Again
@@ -414,6 +462,7 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
                         addImage(generatedImg!);
                         setShowAiModal(false);
                         setGeneratedImg(null);
+                        setMatchedImages([]);
                         setAiPrompt('');
                       }}
                       className="flex-1 py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-lg hover:bg-[#B19CD9] transition-all"
@@ -422,7 +471,57 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
                     </button>
                   </div>
                 </div>
-              )}
+              ) : matchedImages.length > 0 ? (
+                <div className="space-y-6 animate-in fade-in duration-500">
+                  <div className="text-center space-y-2">
+                    <h3 className="text-xl serif font-bold text-[#7B68A6]">Here are images that match your vision:</h3>
+                    <p className="text-sm text-gray-400 italic">Tap any image to add it to your board</p>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    {matchedImages.map((img, idx) => {
+                      const alreadyAdded = data.visionBoard.images.includes(img.url);
+                      return (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            if (!alreadyAdded) {
+                              addImage(img.url);
+                            }
+                          }}
+                          className={`relative aspect-square rounded-2xl overflow-hidden cursor-pointer group hover:ring-4 hover:ring-[#B19CD9] transition-all ${alreadyAdded ? 'ring-2 ring-green-400' : ''}`}
+                        >
+                          <img src={img.url} alt={img.tag} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="font-bold text-sm text-center px-2">{img.tag}</span>
+                            {alreadyAdded ? (
+                              <div className="mt-2 p-1.5 bg-green-500 rounded-full"><Check size={14} /></div>
+                            ) : (
+                              <div className="mt-2 p-1.5 bg-[#B19CD9] rounded-full"><Plus size={14} /></div>
+                            )}
+                          </div>
+                          <div className="absolute bottom-2 left-2 px-2 py-0.5 bg-white/80 rounded-full text-[10px] font-bold text-[#7B68A6]">
+                            {img.category}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => { setMatchedImages([]); setAiPrompt(''); }}
+                      className="flex-1 py-4 border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-2xl hover:bg-[#F8F7FC] transition-all"
+                    >
+                      Try Different Words
+                    </button>
+                    <button
+                      onClick={() => { setShowAiModal(false); setMatchedImages([]); setAiPrompt(''); }}
+                      className="flex-1 py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-lg hover:bg-[#B19CD9] transition-all"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -19,9 +19,9 @@ import {
   MessageCircle,
   Database,
   User,
-  Crown,
   Shield
 } from 'lucide-react';
+import ButterflyIcon from './ButterflyIcon';
 
 interface SidebarProps {
   currentView: string;
@@ -114,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               ? 'bg-gradient-to-r from-[#D4AF37]/10 to-[#B19CD9]/10 border border-[#D4AF37]/20'
               : 'bg-[#F8F7FC] border border-[#E6D5F0]'
           }`}>
-            {isPremium ? <Crown size={16} className="text-[#D4AF37]" /> : <Shield size={16} className="text-[#B19CD9]" />}
+            {isPremium ? <ButterflyIcon size={16} className="text-[#D4AF37]" /> : <Shield size={16} className="text-[#B19CD9]" />}
             <div className="flex-1">
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">{userName || 'User'}</p>
               <p className={`text-xs font-bold ${isPremium ? 'text-[#D4AF37]' : 'text-[#7B68A6]'}`}>

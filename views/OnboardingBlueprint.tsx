@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import { Sparkles, ChevronRight, ChevronLeft, Sun, Target, Crown, Heart, BookOpen, Clock } from 'lucide-react';
+import { Sparkles, ChevronRight, ChevronLeft, Sun, Target, Heart, BookOpen, Clock } from 'lucide-react';
+import ButterflyIcon from '../components/ButterflyIcon';
 import { BlueprintData } from '../types';
 
 interface Props {
@@ -38,7 +39,7 @@ const OnboardingBlueprint: React.FC<Props> = ({ onComplete }) => {
       content: (
         <div className="text-center space-y-8 py-12">
           <div className="inline-block p-4 bg-[#B19CD9]/10 rounded-full mb-4">
-            <Crown size={64} className="text-[#B19CD9]" />
+            <ButterflyIcon size={64} className="text-[#B19CD9]" />
           </div>
           <h2 className="text-5xl serif font-bold text-[#7B68A6]">You Are Royalty.</h2>
           <p className="text-lg text-gray-500 max-w-xl mx-auto italic">
@@ -72,7 +73,7 @@ const OnboardingBlueprint: React.FC<Props> = ({ onComplete }) => {
     {
       id: 'goals',
       title: 'The Overarching Goal',
-      icon: <Crown className="text-[#D4AF37]" />,
+      icon: <ButterflyIcon className="text-[#D4AF37]" />,
       content: (
         <div className="space-y-8">
           <div className="space-y-4">
@@ -223,7 +224,7 @@ const OnboardingBlueprint: React.FC<Props> = ({ onComplete }) => {
               onClick={() => onComplete({...formData, completed: true})}
               className="w-full py-5 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-3"
             >
-              <Crown /> Activate My Blueprint
+              <ButterflyIcon /> Activate My Blueprint
             </button>
           </div>
         </div>
