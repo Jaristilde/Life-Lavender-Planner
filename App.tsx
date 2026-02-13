@@ -61,74 +61,101 @@ const App: React.FC = () => {
   useEffect(() => {
     let mounted = true;
 
-    const initAuth = async () => {
-      const timeout = setTimeout(() => {
-        if (mounted && loading) finishSplash();
-      }, 3000);
+    // Safety net: suppress Supabase internal AbortError (known issue with token refresh race)
+    const handleUnhandledRejection = (e: PromiseRejectionEvent) => {
+      if (e.reason?.name === 'AbortError') {
+        e.preventDefault();
+        console.log('[Auth] Suppressed Supabase internal AbortError');
+      }
+    };
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    // Fallback timeout — if auth takes too long, show auth screen
+    const fallbackTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.log('[Auth] Fallback timeout reached, finishing splash');
+        finishSplash();
+      }
+    }, 4000);
+
+    console.log('[Auth] Setting up onAuthStateChange listener');
+
+    // Single auth source: onAuthStateChange fires INITIAL_SESSION on setup
+    const subscription = authService.onAuthStateChange(async (event, session) => {
+      if (!mounted) return;
+
+      console.log('[Auth] Event:', event, '| User:', session?.user?.email || 'none');
 
       try {
-        const session = await authService.getSession();
-        if (!mounted) return;
-
-        if (session?.user) {
-          setUser(session.user);
-          await loadUserData(session.user.id, mounted);
-        } else {
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          if (session?.user) {
+            setUser(session.user);
+            clearTimeout(fallbackTimeout);
+            await loadUserData(session.user.id, mounted);
+          } else if (event === 'INITIAL_SESSION') {
+            // No session on initial load — show auth screen
+            console.log('[Auth] No session found, showing auth screen');
+            clearTimeout(fallbackTimeout);
+            finishSplash();
+          }
+        } else if (event === 'SIGNED_OUT') {
+          console.log('[Auth] User signed out');
+          setUser(null);
+          setProfile(null);
+          setActiveYearData(null);
+          setLoadError(null);
+          clearTimeout(fallbackTimeout);
           finishSplash();
         }
       } catch (err: any) {
-        if (err?.name !== 'AbortError') {
-          console.error("Auth init failed:", err);
+        console.error('[Auth] Handler error:', event, err?.message || err);
+        if (mounted) {
+          if (err?.name === 'AbortError') {
+            console.log('[Auth] AbortError in handler — retrying via fallback');
+          } else {
+            setLoadError(err?.message || err?.msg || 'Connection error');
+          }
+          clearTimeout(fallbackTimeout);
+          finishSplash();
         }
-        if (mounted) finishSplash();
-      } finally {
-        clearTimeout(timeout);
-      }
-    };
-
-    initAuth();
-
-    const subscription = authService.onAuthStateChange(async (event, session) => {
-      if (!mounted) return;
-      if (session?.user) {
-        setUser(session.user);
-        await loadUserData(session.user.id, mounted);
-      } else {
-        setUser(null);
-        setProfile(null);
-        setActiveYearData(null);
-        finishSplash();
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimeout);
       subscription.unsubscribe();
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
     };
   }, []);
 
   const loadUserData = async (userId: string, isMounted: boolean) => {
+    console.log('[Data] Loading user data for:', userId);
     try {
+      console.log('[Data] Fetching profile...');
       const userProfile = await dataService.getProfile(userId);
       if (!isMounted) return;
       setProfile(userProfile);
+      console.log('[Data] Profile loaded:', userProfile?.name || 'new user');
 
+      console.log('[Data] Fetching years...');
       const years = await dataService.getAllYears(userId);
       if (!isMounted) return;
       setAllYears(years || []);
 
       const currentYear = new Date().getFullYear();
+      console.log('[Data] Fetching year data for', currentYear);
       let dbYear = await dataService.getYearData(userId, currentYear);
 
       if (!dbYear && isMounted) {
+        console.log('[Data] No year found, creating...');
         dbYear = await dataService.createYear(userId, currentYear, INITIAL_YEAR_DATA(currentYear));
       }
 
       if (!isMounted) return;
 
       const baseData = INITIAL_YEAR_DATA(currentYear);
-      
-      // Robust Deep Merge to prevent "undefined reading 0" crashes
+
       const mergedData = {
         ...baseData,
         ...dbYear,
@@ -147,9 +174,10 @@ const App: React.FC = () => {
 
       setActiveYearId(dbYear.id);
       setActiveYearData(mergedData);
+      console.log('[Data] All data loaded successfully');
       finishSplash();
     } catch (err: any) {
-      console.error('Failed to load data:', err);
+      console.error('[Data] Failed to load:', err?.code, err?.message || err?.msg || err);
       if (isMounted) {
         const msg = err?.message || err?.msg || 'Failed to load your data';
         setLoadError(msg);
