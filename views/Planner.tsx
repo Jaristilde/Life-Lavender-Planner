@@ -13,7 +13,6 @@ import {
   LogOut,
   Sparkles,
   CalendarCheck2,
-  // Added Sunrise to fix the "Cannot find name 'Sunrise'" error on line 197
   Sunrise
 } from 'lucide-react';
 
@@ -185,7 +184,6 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData, googleSync, updateG
               ))}
            </div>
          </div>
-         {/* ... (remaining sections: Energy Focus, Eliminate, etc. with similar safety) */}
       </div>
     );
   };
@@ -220,7 +218,6 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData, googleSync, updateG
             ))}
           </div>
         </div>
-        {/* ... (remaining sections: Midday Focus, Evening Reflection with similar safety) */}
       </div>
     );
   };

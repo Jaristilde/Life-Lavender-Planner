@@ -76,7 +76,6 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Morning Alignment Card */}
         <div className="paper-card p-8 bg-gradient-to-br from-white to-[#F8F7FC] border-t-8 border-[#B19CD9]">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-[#E6D5F0] rounded-xl"><Sparkles size={20} className="text-[#7B68A6]" /></div>
@@ -101,7 +100,6 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        {/* Energy Index Card */}
         <div className="paper-card p-8 lg:col-span-2">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
@@ -148,7 +146,6 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        {/* Meditation Log */}
         <div className="paper-card p-8">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-[#D1F7E9] rounded-xl"><Wind size={20} className="text-[#10B981]" /></div>
@@ -168,22 +165,9 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
                 <Plus size={20} />
               </button>
             </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {['Guided', 'Silent', 'Breathwork'].map(type => (
-                <button
-                  key={type}
-                  onClick={() => updateMetrics({ meditation_type: type.toLowerCase() as any })}
-                  className={`px-3 py-2 text-[10px] font-bold rounded-xl border transition-all ${metrics?.meditation_type === type.toLowerCase() ? 'bg-[#10B981] border-[#10B981] text-white' : 'border-[#eee] text-gray-400 hover:border-[#10B981]'}`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        {/* Movement Log Integration */}
         <div className="paper-card p-8">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-[#E6D5F0] rounded-xl"><Dumbbell size={20} className="text-[#7B68A6]" /></div>
@@ -194,10 +178,6 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
             <div>
               <span className="text-[10px] font-bold text-gray-400 uppercase">Active Minutes</span>
               <p className="text-3xl font-bold text-[#B19CD9]">{metrics?.movement_minutes ?? 0} <span className="text-sm font-normal text-gray-400">min</span></p>
-            </div>
-            
-            <div className="p-4 bg-[#F8F7FC] rounded-2xl border border-[#eee] border-dashed">
-              <p className="text-[10px] text-gray-400 uppercase font-bold text-center">Linked to Wellness Tracker</p>
             </div>
             
             <div className="grid grid-cols-2 gap-3">
@@ -214,7 +194,6 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        {/* Financial Action Tracker */}
         <div className="paper-card p-8">
           <div className="flex items-center gap-3 mb-8">
             <div className="p-2 bg-[#FFEEDD] rounded-xl"><Wallet size={20} className="text-[#D4AF37]" /></div>

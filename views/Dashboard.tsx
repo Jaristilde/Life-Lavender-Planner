@@ -27,20 +27,20 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   useEffect(() => {
     const loadAffirmations = async () => {
       const affs = await generatePersonalizedAffirmations(userName, mood, feeling);
-      setPersonalAffirmations(affs);
+      setPersonalAffirmations(affs || []);
     };
     loadAffirmations();
   }, [userName, mood, feeling]);
 
   // Safe Accessor Patterns with Fallbacks
   const financial = data?.financial ?? { income: 0, fixedExpenses: [], variableExpenses: [], savingsGoals: [] };
-  const income = financial.income ?? 0;
-  const fixedExpenses = financial.fixedExpenses ?? [];
-  const variableExpenses = financial.variableExpenses ?? [];
-  const savingsGoals = financial.savingsGoals ?? [];
+  const income = financial?.income ?? 0;
+  const fixedExpenses = financial?.fixedExpenses ?? [];
+  const variableExpenses = financial?.variableExpenses ?? [];
+  const savingsGoals = financial?.savingsGoals ?? [];
   
   const wellness = data?.wellness ?? { dailyToDos: [], workouts: [], meTime: [], vacations: [] };
-  const dailyToDos = wellness.dailyToDos ?? [];
+  const dailyToDos = wellness?.dailyToDos ?? [];
   
   const challenge = data?.simplifyChallenge ?? [];
   const blueprint = data?.blueprint ?? { topIntentions: [], morningRitual: [] };
