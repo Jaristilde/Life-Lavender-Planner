@@ -9,7 +9,6 @@ import {
   Columns,
   CheckSquare,
   Plus,
-  GlassWater,
   GripVertical,
   Trash2
 } from 'lucide-react';
@@ -310,9 +309,9 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                   <button
                     key={i}
                     onClick={() => updateDailyMetrics(selectedDate, { hydration_count: i === metrics.hydration_count ? i - 1 : i })}
-                    className={`transition-all ${i <= metrics.hydration_count ? 'text-[#7B68A6]' : 'text-gray-200 hover:text-[#B19CD9]'}`}
+                    className={`text-xl transition-all ${i <= metrics.hydration_count ? 'scale-110' : 'opacity-30 hover:opacity-60'}`}
                   >
-                    <GlassWater size={20} fill={i <= metrics.hydration_count ? 'currentColor' : 'none'} />
+                    💧
                   </button>
                 ))}
               </div>
