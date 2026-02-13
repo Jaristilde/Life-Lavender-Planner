@@ -1,15 +1,15 @@
 
 import React, { useState } from 'react';
 import { YearData, GoogleSyncSettings, PlannerFocus, UserDailyMetrics, KanbanItem } from '../types';
-import { 
-  ChevronLeft, 
-  ChevronRight, 
-  Calendar as CalendarIcon, 
-  LayoutGrid, 
-  Columns, 
-  CheckSquare, 
-  Plus, 
-  Droplets,
+import {
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon,
+  LayoutGrid,
+  Columns,
+  CheckSquare,
+  Plus,
+  GlassWater,
   GripVertical,
   Trash2
 } from 'lucide-react';
@@ -84,7 +84,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
     const handleDrop = (e: React.DragEvent, targetCol: keyof UserDailyMetrics['kanban']) => {
       const itemId = e.dataTransfer.getData('itemId');
       const sourceCol = e.dataTransfer.getData('sourceCol') as keyof UserDailyMetrics['kanban'];
-      
+
       if (sourceCol === targetCol) return;
 
       const item = metrics.kanban[sourceCol].find(i => i.id === itemId);
@@ -104,19 +104,19 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
 
     return (
       <div className="max-w-4xl mx-auto space-y-0 pb-20 bg-white shadow-2xl rounded-2xl overflow-hidden border border-[#eee] animate-in fade-in duration-700">
-        
+
         {/* 1. HEADER AREA */}
         <div className="relative w-full h-48 md:h-64 overflow-hidden">
-          <img 
-            src="https://images.unsplash.com/photo-1549490349-8643362247b5?auto=format&fit=crop&q=80&w=1200" 
-            alt="Lavender Butterfly" 
-            className="w-full h-full object-cover grayscale-[30%] opacity-80" 
+          <img
+            src="/butterfly.png"
+            alt="Lavender Butterfly"
+            className="w-full h-full object-cover grayscale-[30%] opacity-80"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-transparent to-transparent flex items-end p-8">
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/20 to-transparent flex items-end p-8">
             <div className="space-y-1">
-              <h2 className="text-4xl serif font-bold text-[#7B68A6]">Daily Planner</h2>
-              <p className="text-[#B19CD9] font-bold uppercase tracking-widest text-xs flex items-center gap-2">
-                Today's Date: <span className="text-[#7B68A6]">{formattedDate}</span>
+              <h2 className="text-4xl serif font-bold text-white">Daily Planner</h2>
+              <p className="text-white font-bold uppercase tracking-widest text-xs flex items-center gap-2">
+                Today's Date: <span className="text-white">{formattedDate}</span>
               </p>
             </div>
           </div>
@@ -127,7 +127,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <h3 className="serif text-xl font-bold text-[#7B68A6]">Today I Am Grateful For:</h3>
           <div className="space-y-2">
             {[0, 1, 2].map(i => (
-              <input 
+              <input
                 key={i}
                 type="text"
                 className="w-full workbook-input italic text-gray-700 border-[#B19CD9]/30"
@@ -149,7 +149,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <div className="space-y-4">
             {[0, 1, 2].map(i => (
               <div key={i} className="flex items-center gap-4">
-                <button 
+                <button
                   onClick={() => {
                     const newGoals = [...metrics.daily_goals];
                     newGoals[i].completed = !newGoals[i].completed;
@@ -159,7 +159,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                 >
                   {metrics.daily_goals[i].completed && <div className="w-2 h-2 bg-white rounded-full" />}
                 </button>
-                <input 
+                <input
                   type="text"
                   className={`flex-1 workbook-input ${metrics.daily_goals[i].completed ? 'line-through text-gray-400' : 'text-gray-800 font-medium'}`}
                   placeholder="Enter a primary goal..."
@@ -181,7 +181,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
             {[0, 1, 2, 3].map(i => (
               <div key={i} className="flex items-center gap-4">
-                <button 
+                <button
                   onClick={() => {
                     const newSc = [...metrics.self_care];
                     newSc[i].completed = !newSc[i].completed;
@@ -191,7 +191,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                 >
                   {metrics.self_care[i].completed && <div className="w-2 h-2 bg-white rounded-full" />}
                 </button>
-                <input 
+                <input
                   type="text"
                   className={`flex-1 workbook-input border-[#B19CD9]/30 ${metrics.self_care[i].completed ? 'line-through text-gray-400' : 'text-gray-700 italic'}`}
                   placeholder="Self-care activity..."
@@ -217,13 +217,18 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               { id: 'good', emoji: '🙂', label: 'Good' },
               { id: 'amazing', emoji: '😄', label: 'Amazing' },
             ].map(m => (
-              <button 
+              <button
                 key={m.id}
                 onClick={() => updateDailyMetrics(selectedDate, { mood: m.id as any })}
                 className="flex flex-col items-center gap-2 group"
               >
-                <div className={`w-14 h-14 rounded-full border-2 flex items-center justify-center text-2xl transition-all ${metrics.mood === m.id ? 'bg-[#E6D5F0] border-[#B19CD9] scale-110 shadow-md' : 'border-transparent hover:bg-gray-50'}`}>
+                <div className={`relative w-14 h-14 rounded-full border-2 flex items-center justify-center text-2xl transition-all ${metrics.mood === m.id ? 'bg-[#E6D5F0] border-[#B19CD9] scale-110 shadow-md' : 'border-transparent hover:bg-gray-50'}`}>
                   {m.emoji}
+                  {metrics.mood === m.id && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-[#7B68A6] rounded-full flex items-center justify-center shadow-md">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    </div>
+                  )}
                 </div>
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${metrics.mood === m.id ? 'text-[#7B68A6]' : 'text-gray-400'}`}>{m.label}</span>
               </button>
@@ -236,7 +241,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <div className="bg-[#E6D5F0]/40 rounded-3xl p-8 border-2 border-[#B19CD9]/20 space-y-4 text-center">
             <h3 className="serif text-2xl font-bold text-[#7B68A6]">Daily Self-Care Act</h3>
             <p className="text-gray-500 italic text-sm">"Go for a walk, meditate, or do something fun you enjoy"</p>
-            <input 
+            <input
               type="text"
               className="w-full bg-white border border-[#E6D5F0] rounded-2xl p-4 text-center text-[#7B68A6] font-medium outline-none focus:ring-2 focus:ring-[#B19CD9]"
               placeholder="What did you do for yourself?"
@@ -251,7 +256,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <h3 className="serif text-xl font-bold text-[#7B68A6] text-center">Energy Level:</h3>
           <div className="flex justify-center gap-2 md:gap-4 flex-wrap">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-              <button 
+              <button
                 key={n}
                 onClick={() => updateDailyMetrics(selectedDate, { energy_level: n })}
                 className={`w-10 h-10 rounded-full border-2 font-bold text-sm transition-all ${metrics.energy_level === n ? 'bg-[#B19CD9] border-[#B19CD9] text-white shadow-md' : 'bg-white border-[#E6D5F0] text-gray-400 hover:border-[#B19CD9]'}`}
@@ -265,7 +270,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         {/* 8. SELF-LOVE PROMPT */}
         <section className="bg-white p-8 space-y-4">
           <h3 className="serif text-xl font-bold text-[#7B68A6]">One Thing You Love About Yourself Today:</h3>
-          <input 
+          <input
             type="text"
             className="w-full workbook-input italic text-[#7B68A6] text-lg text-center"
             placeholder="Write a self-love affirmation..."
@@ -280,7 +285,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Physical Activity</label>
-              <input 
+              <input
                 type="text"
                 className="w-full workbook-input text-center text-sm font-medium border-[#B19CD9]/30"
                 placeholder="e.g., Pilates, Walking"
@@ -290,7 +295,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Minutes</label>
-              <input 
+              <input
                 type="number"
                 className="w-full workbook-input text-center text-sm font-bold border-[#B19CD9]/30"
                 placeholder="0"
@@ -302,12 +307,12 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block text-center">Hydration</label>
               <div className="flex justify-center items-center gap-1 mt-2">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
-                  <button 
+                  <button
                     key={i}
                     onClick={() => updateDailyMetrics(selectedDate, { hydration_count: i === metrics.hydration_count ? i - 1 : i })}
                     className={`transition-all ${i <= metrics.hydration_count ? 'text-[#7B68A6]' : 'text-gray-200 hover:text-[#B19CD9]'}`}
                   >
-                    <Droplets size={20} fill={i <= metrics.hydration_count ? 'currentColor' : 'none'} />
+                    <GlassWater size={20} fill={i <= metrics.hydration_count ? 'currentColor' : 'none'} />
                   </button>
                 ))}
               </div>
@@ -320,7 +325,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <h3 className="serif text-xl font-bold text-[#7B68A6]">Tomorrow's Self-Care Focus:</h3>
           <div className="space-y-2">
             {[0, 1].map(i => (
-              <input 
+              <input
                 key={i}
                 type="text"
                 className="w-full workbook-input italic text-gray-500"
@@ -341,7 +346,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <h3 className="serif text-3xl font-bold text-[#7B68A6] text-center">My Task Board</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {(['todo', 'inProgress', 'done', 'notes'] as Array<keyof UserDailyMetrics['kanban']>).map(colKey => (
-              <div 
+              <div
                 key={colKey}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => handleDrop(e, colKey)}
@@ -351,7 +356,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                   <span className="font-bold uppercase text-[10px] tracking-[0.2em]">
                     {colKey === 'inProgress' ? 'In Progress' : colKey.toUpperCase()}
                   </span>
-                  <button 
+                  <button
                     onClick={() => handleKanbanAdd(colKey)}
                     className="p-1 hover:bg-white/20 rounded-lg transition-colors"
                   >
@@ -360,7 +365,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                 </div>
                 <div className="flex-1 p-3 space-y-3 custom-scrollbar overflow-y-auto">
                   {(metrics.kanban[colKey] || []).map(item => (
-                    <div 
+                    <div
                       key={item.id}
                       draggable
                       onDragStart={(e) => handleDragStart(e, item.id, colKey)}
@@ -404,7 +409,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             <div className="space-y-6">
               <div className="group">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1 block group-focus-within:text-[#B19CD9] transition-colors">Monthly Theme</label>
-                <input 
+                <input
                   className="w-full bg-transparent border-b border-[#E6D5F0] py-2 outline-none italic text-lg"
                   placeholder="The focus of this month..."
                   value={monthData?.theme || ''}
@@ -419,7 +424,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-6">
                 <div>
                   <label className="text-[10px] font-bold uppercase text-gray-400 mb-1 block">Financial Target</label>
-                  <input 
+                  <input
                     className="w-full bg-[#F8F7FC] rounded-lg px-4 py-3 border border-[#E6D5F0] outline-none focus:ring-2 focus:ring-[#B19CD9]"
                     placeholder="$ Goal"
                     value={monthData?.financialTarget || ''}
@@ -433,7 +438,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                 </div>
                 <div>
                   <label className="text-[10px] font-bold uppercase text-gray-400 mb-1 block">Wellness Target</label>
-                  <input 
+                  <input
                     className="w-full bg-[#F8F7FC] rounded-lg px-4 py-3 border border-[#E6D5F0] outline-none focus:ring-2 focus:ring-[#B19CD9]"
                     placeholder="Health Goal"
                     value={monthData?.wellnessTarget || ''}
@@ -449,7 +454,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             </div>
           </div>
         </div>
-        
+
         <div className="flex-1 paper-card p-8">
            <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-4">
@@ -458,7 +463,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                  <button onClick={() => setSelectedMonth(prev => prev < 11 ? prev + 1 : 0)} className="p-2 hover:bg-[#F8F7FC] rounded-full transition-colors"><ChevronRight size={20} /></button>
               </div>
            </div>
-           
+
            <div className="grid grid-cols-7 gap-2">
               {Array.from({ length: 35 }).map((_, i) => (
                 <div key={i} className="aspect-square border border-[#F8F7FC] rounded-xl flex flex-col p-2 hover:bg-[#F8F7FC] transition-colors cursor-pointer group">
@@ -481,7 +486,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
            <h3 className="font-bold text-[#7B68A6] uppercase text-xs tracking-widest">Core Outcomes</h3>
            <div className="space-y-4">
               {[0, 1, 2].map((i) => (
-                <input 
+                <input
                   key={i}
                   className="w-full bg-transparent border-b border-[#E6D5F0] py-2 outline-none text-sm"
                   placeholder={`Outcome ${i+1}`}
@@ -510,19 +515,19 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <p className="text-gray-500 italic">Navigate from vision to execution seamlessly.</p>
         </div>
         <div className="flex items-center gap-2 md:gap-4 bg-white p-1 rounded-2xl shadow-sm border border-[#eee]">
-          <button 
+          <button
             onClick={() => setViewMode('monthly')}
             className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'monthly' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
             <LayoutGrid size={16} /> Monthly
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('weekly')}
             className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'weekly' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
             <Columns size={16} /> Weekly
           </button>
-          <button 
+          <button
             onClick={() => setViewMode('daily')}
             className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'daily' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
@@ -533,7 +538,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
 
       {viewMode === 'daily' && (
         <div className="mb-6 flex items-center justify-center gap-4">
-          <button 
+          <button
             onClick={() => {
               const d = new Date(selectedDate);
               d.setDate(d.getDate() - 1);
@@ -546,7 +551,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           <div className="px-6 py-2 bg-white rounded-full border border-[#B19CD9] font-bold text-[#7B68A6] shadow-sm">
             {new Date(selectedDate).toDateString()}
           </div>
-          <button 
+          <button
             onClick={() => {
               const d = new Date(selectedDate);
               d.setDate(d.getDate() + 1);

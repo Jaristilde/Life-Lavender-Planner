@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { 
-  LayoutDashboard, 
-  Wallet, 
-  Heart, 
-  Calendar, 
-  Target, 
-  Sparkles, 
+import {
+  LayoutDashboard,
+  Wallet,
+  Heart,
+  Calendar,
+  Target,
+  Sparkles,
   History,
   Settings,
   X,
@@ -29,13 +29,13 @@ interface SidebarProps {
   onAddYear: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ 
-  currentView, 
-  setView, 
-  isOpen, 
-  setIsOpen, 
-  activeYear, 
-  years, 
+const Sidebar: React.FC<SidebarProps> = ({
+  currentView,
+  setView,
+  isOpen,
+  setIsOpen,
+  activeYear,
+  years,
   onYearChange,
   onAddYear
 }) => {
@@ -61,8 +61,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         if (window.innerWidth < 1024) setIsOpen(false);
       }}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-        currentView === id 
-          ? 'bg-[#B19CD9] text-white shadow-md' 
+        currentView === id
+          ? 'bg-[#B19CD9] text-white shadow-md'
           : 'text-gray-600 hover:bg-[#E6D5F0] hover:text-[#7B68A6]'
       }`}
     >
@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   return (
     <>
       {isOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsOpen(false)}
         />
@@ -87,7 +87,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       `}>
         <div className="flex flex-col h-full p-6">
           <div className="flex items-center justify-between mb-10">
-            <h1 className="text-2xl serif font-bold text-[#7B68A6]">Reset & Rebuild</h1>
+            <h1 className="text-2xl serif font-bold text-[#7B68A6]">Lavender Life Planner</h1>
             <button onClick={() => setIsOpen(false)} className="lg:hidden text-gray-400">
               <X size={24} />
             </button>
@@ -96,14 +96,14 @@ const Sidebar: React.FC<SidebarProps> = ({
           <div className="mb-8">
             <label className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 block">Current Year</label>
             <div className="flex items-center gap-2">
-              <select 
+              <select
                 value={activeYear}
                 onChange={(e) => onYearChange(Number(e.target.value))}
                 className="flex-1 bg-[#F8F7FC] border border-[#E6D5F0] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B19CD9]"
               >
                 {years.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
-              <button 
+              <button
                 onClick={onAddYear}
                 className="p-2 bg-[#E6D5F0] text-[#7B68A6] rounded-lg hover:bg-[#B19CD9] hover:text-white transition-colors"
                 title="Add New Year"

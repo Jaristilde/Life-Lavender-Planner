@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { 
-  Home, 
-  Wallet, 
-  Heart, 
+import {
+  Home,
+  Wallet,
+  Heart,
   Menu,
   ClipboardList
 } from 'lucide-react';
@@ -24,12 +24,12 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
   ];
 
   return (
-    <nav 
+    <nav
       className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E6D5F0] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 px-4 flex items-center justify-around h-[70px] pb-[env(safe-area-inset-bottom)]"
     >
       {tabs.map(tab => {
         const isActive = currentView === tab.id || (tab.id === 'more' && false); // More is a sheet, not a view
-        
+
         return (
           <button
             key={tab.id}
@@ -45,9 +45,9 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
             }`}
           >
             <div className="relative flex flex-col items-center">
-              <tab.icon 
-                size={24} 
-                className={`transition-all ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`} 
+              <tab.icon
+                size={24}
+                className={`transition-all ${isActive ? 'stroke-[2.5px]' : 'stroke-[2px]'}`}
               />
               {isActive && (
                 <div className="absolute -bottom-1.5 w-1 h-1 bg-[#7B68A6] rounded-full" />
