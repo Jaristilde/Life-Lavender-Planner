@@ -39,6 +39,7 @@ const App: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const saveTimeout = useRef<any>(null);
   const splashStart = useRef(Date.now());
@@ -147,9 +148,13 @@ const App: React.FC = () => {
       setActiveYearId(dbYear.id);
       setActiveYearData(mergedData);
       finishSplash();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load data:', err);
-      if (isMounted) finishSplash();
+      if (isMounted) {
+        const msg = err?.message || err?.msg || 'Failed to load your data';
+        setLoadError(msg);
+        finishSplash();
+      }
     }
   };
 
@@ -198,6 +203,45 @@ const App: React.FC = () => {
     return <SplashScreen fadingOut={splashFading} />;
   }
   if (!user) return <AuthScreen />;
+
+  if (loadError || (!activeYearData && !loading)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6">
+        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[32px] shadow-2xl max-w-sm w-full text-center space-y-6">
+          <div className="text-4xl">🦋</div>
+          <h2 className="serif text-2xl font-bold text-white">Connection Issue</h2>
+          <p className="text-white/70 text-sm">{loadError || 'Unable to load your data. Please try again.'}</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => {
+                setLoadError(null);
+                setLoading(true);
+                setSplashVisible(true);
+                setSplashFading(false);
+                splashStart.current = Date.now();
+                loadUserData(user.id, true);
+              }}
+              className="w-full py-3 bg-white text-[#7B68A6] font-bold rounded-2xl hover:bg-gray-50 transition-all"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={async () => {
+                await authService.signOut();
+                setUser(null);
+                setProfile(null);
+                setActiveYearData(null);
+                setLoadError(null);
+              }}
+              className="w-full py-3 bg-white/10 text-white font-bold rounded-2xl hover:bg-white/20 transition-all text-sm"
+            >
+              Sign Out & Try Different Account
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (profile && !profile.onboarding_completed) {
     return (
