@@ -41,7 +41,6 @@ const App: React.FC = () => {
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
 
   const saveTimeout = useRef<any>(null);
-  const authChecked = useRef(false);
   const splashStart = useRef(Date.now());
 
   const finishSplash = () => {
@@ -67,27 +66,26 @@ const App: React.FC = () => {
       }, 3000);
 
       try {
-        const currentUser = await authService.getUser();
+        const session = await authService.getSession();
         if (!mounted) return;
 
-        if (currentUser) {
-          setUser(currentUser);
-          await loadUserData(currentUser.id, mounted);
+        if (session?.user) {
+          setUser(session.user);
+          await loadUserData(session.user.id, mounted);
         } else {
           finishSplash();
         }
-      } catch (err) {
-        console.error("Auth init failed:", err);
+      } catch (err: any) {
+        if (err?.name !== 'AbortError') {
+          console.error("Auth init failed:", err);
+        }
         if (mounted) finishSplash();
       } finally {
         clearTimeout(timeout);
       }
     };
 
-    if (!authChecked.current) {
-      authChecked.current = true;
-      initAuth();
-    }
+    initAuth();
 
     const subscription = authService.onAuthStateChange(async (event, session) => {
       if (!mounted) return;

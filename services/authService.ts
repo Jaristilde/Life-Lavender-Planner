@@ -49,6 +49,11 @@ export const authService = {
     return user;
   },
 
+  async getSession() {
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
+  },
+
   onAuthStateChange(callback: (event: string, session: any) => void) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(callback);
     return subscription;
