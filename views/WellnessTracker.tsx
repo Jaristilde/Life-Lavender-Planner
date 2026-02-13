@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { YearData, Priority } from '../types';
 import { Coffee, Dumbbell, Map, CheckCircle2, Plus, Clock, Trash2, CheckSquare, Square, X, Sparkles, Footprints, Flame, Timer, Waves, Bike } from 'lucide-react';
@@ -21,7 +20,11 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
   const [selectedWorkout, setSelectedWorkout] = useState(WORKOUT_TYPES[0]);
   const [workoutDuration, setWorkoutDuration] = useState(30);
 
-  const w = data.wellness;
+  const w = data?.wellness || { dailyToDos: [], workouts: [], meTime: [], vacations: [] };
+  const dailyToDos = w.dailyToDos ?? [];
+  const workouts = w.workouts ?? [];
+  const meTime = w.meTime ?? [];
+  const vacations = w.vacations ?? [];
 
   const updateWellness = (newW: Partial<typeof w>) => {
     updateData({ ...data, wellness: { ...w, ...newW } });
@@ -37,13 +40,13 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
       priority: 'medium' as Priority,
       category: 'General'
     };
-    updateWellness({ dailyToDos: [task, ...w.dailyToDos] });
+    updateWellness({ dailyToDos: [task, ...dailyToDos] });
     setNewTask('');
   };
 
   const toggleTask = (id: string) => {
     updateWellness({
-      dailyToDos: w.dailyToDos.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
+      dailyToDos: dailyToDos.map(t => t.id === id ? { ...t, completed: !t.completed } : t)
     });
   };
 
@@ -55,7 +58,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
       duration: workoutDuration,
       completed: true
     };
-    updateWellness({ workouts: [workout, ...w.workouts] });
+    updateWellness({ workouts: [workout, ...workouts] });
     setIsWorkoutModalOpen(false);
   };
 
@@ -66,14 +69,14 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
       type,
       hours: 1
     };
-    updateWellness({ meTime: [entry, ...w.meTime] });
+    updateWellness({ meTime: [entry, ...meTime] });
   };
 
   const addChecklistItem = (vacId: string) => {
     const text = newChecklistItem[vacId];
     if (!text?.trim()) return;
     
-    const newList = w.vacations.map(v => {
+    const newList = vacations.map(v => {
       if (v.id === vacId) {
         return { 
           ...v, 
@@ -88,10 +91,12 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
   };
 
   const toggleChecklistItem = (vacId: string, itemIndex: number) => {
-    const newList = w.vacations.map(v => {
+    const newList = vacations.map(v => {
       if (v.id === vacId) {
-        const newChecklist = [...v.checklist];
-        newChecklist[itemIndex] = { ...newChecklist[itemIndex], done: !newChecklist[itemIndex].done };
+        const newChecklist = [...(v.checklist || [])];
+        if (newChecklist[itemIndex]) {
+          newChecklist[itemIndex] = { ...newChecklist[itemIndex], done: !newChecklist[itemIndex].done };
+        }
         return { ...v, checklist: newChecklist };
       }
       return v;
@@ -100,9 +105,9 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
   };
 
   const removeChecklistItem = (vacId: string, itemIndex: number) => {
-    const newList = w.vacations.map(v => {
+    const newList = vacations.map(v => {
       if (v.id === vacId) {
-        const newChecklist = v.checklist.filter((_, i) => i !== itemIndex);
+        const newChecklist = (v.checklist || []).filter((_, i) => i !== itemIndex);
         return { ...v, checklist: newChecklist };
       }
       return v;
@@ -111,7 +116,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
   };
 
   const removeVacation = (vacId: string) => {
-    updateWellness({ vacations: w.vacations.filter(v => v.id !== vacId) });
+    updateWellness({ vacations: vacations.filter(v => v.id !== vacId) });
   };
 
   return (
@@ -145,7 +150,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
           </form>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2">
-            {w.dailyToDos.map(task => (
+            {(dailyToDos || []).map(task => (
               <div 
                 key={task.id} 
                 className={`flex items-center gap-3 p-3 rounded-xl border border-[#eee] transition-all cursor-pointer ${task.completed ? 'bg-[#F8F7FC] opacity-60' : 'bg-white'}`}
@@ -155,12 +160,12 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                   {task.completed && <div className="w-2 h-2 bg-white rounded-full" />}
                 </div>
                 <span className={`flex-1 font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}>{task.text}</span>
-                <button onClick={(e) => { e.stopPropagation(); updateWellness({ dailyToDos: w.dailyToDos.filter(t => t.id !== task.id) })}}>
+                <button onClick={(e) => { e.stopPropagation(); updateWellness({ dailyToDos: dailyToDos.filter(t => t.id !== task.id) })}}>
                    <Trash2 size={14} className="text-gray-300 hover:text-red-400" />
                 </button>
               </div>
             ))}
-            {w.dailyToDos.length === 0 && (
+            {(dailyToDos || []).length === 0 && (
               <div className="text-center py-12 text-gray-400 italic">No tasks yet.</div>
             )}
           </div>
@@ -182,7 +187,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {w.workouts.map(workout => (
+            {(workouts || []).map(workout => (
               <div key={workout.id} className="p-4 bg-[#F8F7FC] rounded-2xl flex items-center justify-between border border-[#E6D5F0]/30 group relative">
                 <div className="flex items-center gap-4">
                   <div className={`p-3 rounded-xl shadow-sm ${WORKOUT_TYPES.find(t => t.name === workout.type)?.color || 'bg-white text-[#B19CD9]'}`}>
@@ -196,7 +201,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                 <div className="flex items-center gap-2">
                   <div className="bg-[#D1F7E9] text-[#10B981] text-[10px] font-bold px-2 py-1 rounded-full uppercase">Done</div>
                   <button 
-                    onClick={() => updateWellness({ workouts: w.workouts.filter(ww => ww.id !== workout.id) })}
+                    onClick={() => updateWellness({ workouts: workouts.filter(ww => ww.id !== workout.id) })}
                     className="text-gray-300 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 size={14} />
@@ -204,7 +209,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                 </div>
               </div>
             ))}
-            {w.workouts.length === 0 && (
+            {(workouts || []).length === 0 && (
               <div className="col-span-2 text-center py-12 text-gray-400 border-2 border-dashed border-[#eee] rounded-2xl">
                 Ready to move your body? Log your first workout!
               </div>
@@ -236,7 +241,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
           </div>
 
           <div className="mt-8 flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-            {w.meTime.map(item => (
+            {(meTime || []).map(item => (
               <div key={item.id} className="min-w-[150px] p-4 bg-white border border-[#eee] rounded-2xl shadow-sm">
                 <span className="text-[10px] font-bold text-[#B19CD9] uppercase mb-1 block">{item.type}</span>
                 <div className="flex items-center gap-2 mb-2">
@@ -246,7 +251,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                 <span className="text-[10px] text-gray-400">{item.date}</span>
               </div>
             ))}
-            {w.meTime.length === 0 && (
+            {(meTime || []).length === 0 && (
               <p className="text-gray-400 italic">Self-care isn't selfish. Take a moment for yourself today.</p>
             )}
           </div>
@@ -262,7 +267,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
             <button 
               onClick={() => {
                 const vac = { id: Math.random().toString(), destination: 'Dream Destination', date: '', budget: 0, checklist: [] };
-                updateWellness({ vacations: [...w.vacations, vac] });
+                updateWellness({ vacations: [...(vacations || []), vac] });
               }}
               className="text-[#7B68A6] font-bold text-sm hover:underline"
             >
@@ -271,16 +276,16 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {w.vacations.map(vac => (
+            {(vacations || []).map(vac => (
               <div key={vac.id} className="paper-card bg-[#F8F7FC] border-[#E6D5F0] overflow-hidden flex flex-col">
                 <div className="h-24 bg-[#B19CD9]/10 flex items-center justify-between px-6">
                   <div className="flex items-center gap-3">
                     <Map size={32} className="text-[#B19CD9]" />
                     <input 
                       className="text-xl font-bold bg-transparent border-none outline-none w-full"
-                      value={vac.destination}
+                      value={vac.destination || ''}
                       onChange={(e) => {
-                        const newList = [...w.vacations];
+                        const newList = [...vacations];
                         const idx = newList.findIndex(v => v.id === vac.id);
                         newList[idx].destination = e.target.value;
                         updateWellness({ vacations: newList });
@@ -302,9 +307,9 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                       <input 
                         type="number"
                         className="bg-transparent border-none outline-none font-bold text-lg"
-                        value={vac.budget}
+                        value={vac.budget ?? 0}
                         onChange={(e) => {
-                          const newList = [...w.vacations];
+                          const newList = [...vacations];
                           const idx = newList.findIndex(v => v.id === vac.id);
                           newList[idx].budget = Number(e.target.value);
                           updateWellness({ vacations: newList });
@@ -316,7 +321,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                   <div className="flex-1">
                     <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest block mb-3">Packing Checklist</label>
                     <div className="space-y-2 mb-4 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-                      {vac.checklist?.map((item, idx) => (
+                      {(vac.checklist || []).map((item, idx) => (
                         <div key={idx} className="flex items-center gap-3 group">
                           <button 
                             onClick={() => toggleChecklistItem(vac.id, idx)}
@@ -335,7 +340,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                           </button>
                         </div>
                       ))}
-                      {(!vac.checklist || vac.checklist.length === 0) && (
+                      {(!(vac.checklist) || (vac.checklist || []).length === 0) && (
                         <p className="text-xs text-gray-400 italic">No items added yet.</p>
                       )}
                     </div>
@@ -364,6 +369,11 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
                 </div>
               </div>
             ))}
+            {(vacations || []).length === 0 && (
+              <p className="col-span-2 text-center text-gray-400 text-sm italic py-8 border-2 border-dashed border-[#eee] rounded-2xl">
+                Where to next? Plan your next getaway.
+              </p>
+            )}
           </div>
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { YearData } from '../types';
 import { Sparkles, TrendingUp, CheckCircle, Crown, BookOpen, CalendarCheck } from 'lucide-react';
@@ -33,22 +32,26 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
     loadAffirmations();
   }, [userName, mood, feeling]);
 
-  // Safe Accessor Patterns
-  const income = data?.financial?.income ?? 0;
-  const fixedExpenses = data?.financial?.fixedExpenses ?? [];
-  const variableExpenses = data?.financial?.variableExpenses ?? [];
-  const savingsGoals = data?.financial?.savingsGoals ?? [];
-  const dailyToDos = data?.wellness?.dailyToDos ?? [];
+  // Safe Accessor Patterns with Fallbacks
+  const financial = data?.financial ?? { income: 0, fixedExpenses: [], variableExpenses: [], savingsGoals: [] };
+  const income = financial.income ?? 0;
+  const fixedExpenses = financial.fixedExpenses ?? [];
+  const variableExpenses = financial.variableExpenses ?? [];
+  const savingsGoals = financial.savingsGoals ?? [];
+  
+  const wellness = data?.wellness ?? { dailyToDos: [], workouts: [], meTime: [], vacations: [] };
+  const dailyToDos = wellness.dailyToDos ?? [];
+  
   const challenge = data?.simplifyChallenge ?? [];
-  const blueprint = data?.blueprint ?? { topIntentions: [] };
+  const blueprint = data?.blueprint ?? { topIntentions: [], morningRitual: [] };
   const workbook = data?.workbook ?? { current_page: 0 };
   const monthlyResets = data?.monthlyResets ?? {};
 
   const financialSummary = {
     income: income,
-    expenses: fixedExpenses.reduce((sum, e) => sum + (e?.amount ?? 0), 0) + 
-              variableExpenses.reduce((sum, e) => sum + (e?.amount ?? 0), 0),
-    savings: savingsGoals.reduce((sum, s) => sum + (s?.current ?? 0), 0),
+    expenses: (fixedExpenses || []).reduce((sum, e) => sum + (e?.amount ?? 0), 0) + 
+              (variableExpenses || []).reduce((sum, e) => sum + (e?.amount ?? 0), 0),
+    savings: (savingsGoals || []).reduce((sum, s) => sum + (s?.current ?? 0), 0),
   };
 
   const chartData = [
@@ -57,13 +60,13 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
     { name: 'Savings', value: financialSummary.savings },
   ];
 
-  const simplifyProgress = challenge.length > 0 
-    ? Math.round((challenge.filter(c => c?.completed).length / challenge.length) * 100) 
+  const simplifyProgress = (challenge || []).length > 0 
+    ? Math.round(((challenge || []).filter(c => c?.completed).length / (challenge || []).length) * 100) 
     : 0;
 
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   const currentMonthName = months[new Date().getMonth()].toLowerCase();
-  const currentMonthReset = monthlyResets[currentMonthName];
+  const currentMonthReset = monthlyResets?.[currentMonthName];
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -76,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
           <div className="p-2 bg-[#F8F7FC] rounded-full"><Crown size={24} className="text-[#B19CD9]" /></div>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Core Intention</p>
-            <p className="text-lg font-bold serif italic text-[#7B68A6]">{blueprint.topIntentions?.[0] || 'Clarity'}</p>
+            <p className="text-lg font-bold serif italic text-[#7B68A6]">{blueprint?.topIntentions?.[0] || 'Clarity'}</p>
           </div>
         </div>
       </header>
@@ -112,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
             <div className="p-2 bg-[#E6D5F0] rounded-lg text-[#7B68A6]"><TrendingUp size={20} /></div>
             <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Financial Health</h3>
           </div>
-          <p className="text-2xl font-bold">${financialSummary.income.toLocaleString()}</p>
+          <p className="text-2xl font-bold">${(financialSummary?.income ?? 0).toLocaleString()}</p>
           <p className="text-sm text-gray-500 mt-1">Total Monthly Income</p>
         </div>
 
@@ -121,7 +124,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
             <div className="p-2 bg-[#FFEEDD] rounded-lg text-[#FF9933]"><CheckCircle size={20} /></div>
             <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Daily Tasks</h3>
           </div>
-          <p className="text-2xl font-bold">{dailyToDos.filter(t => t?.completed).length} / {dailyToDos.length}</p>
+          <p className="text-2xl font-bold">{(dailyToDos || []).filter(t => t?.completed).length} / {(dailyToDos || []).length}</p>
           <p className="text-sm text-gray-500 mt-1">Completed Today</p>
         </div>
 
@@ -164,7 +167,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
               <div className="flex items-center justify-between mb-2">
                 <h3 className="serif font-bold text-2xl text-[#7B68A6]">Your Money Reset Journey</h3>
                 <span className="text-sm font-bold text-gray-400">
-                  {(workbook?.current_page ?? 0) + 1} of 10
+                  {((workbook?.current_page ?? 0) + 1)} of 10
                 </span>
               </div>
               <div className="w-full bg-[#E6D5F0] rounded-full h-3 mb-4 shadow-inner">
@@ -186,13 +189,13 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         <div className="paper-card p-8">
           <h2 className="text-2xl font-bold mb-6">My Morning Ritual</h2>
           <div className="space-y-4">
-            {(data?.blueprint?.morningRitual || []).filter(r => r?.activity).map((ritual, i) => (
+            {(blueprint?.morningRitual || []).filter(r => r?.activity).map((ritual, i) => (
               <div key={i} className="flex gap-4 items-center p-3 bg-[#F8F7FC] rounded-xl border border-[#eee]">
                 <span className="text-[10px] font-bold text-[#B19CD9] w-12">{ritual?.time}</span>
                 <span className="text-sm font-medium text-gray-700">{ritual?.activity}</span>
               </div>
             ))}
-            {(!data?.blueprint?.morningRitual || data.blueprint.morningRitual.every(r => !r?.activity)) && (
+            {(!(blueprint?.morningRitual) || (blueprint?.morningRitual || []).every(r => !r?.activity)) && (
               <p className="text-center text-gray-400 py-8 italic">No ritual planned yet.</p>
             )}
           </div>

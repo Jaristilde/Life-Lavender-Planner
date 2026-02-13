@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { YearData, UserDailyMetrics } from '../types';
 import { 
@@ -11,7 +10,8 @@ import {
   Circle, 
   Calendar,
   TrendingUp,
-  Clock
+  Clock,
+  Plus
 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { DEFAULT_DAILY_METRICS } from '../constants';
@@ -23,14 +23,14 @@ interface TrackingCenterProps {
 
 const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => {
   const today = new Date().toISOString().split('T')[0];
-  const metrics = data.dailyMetrics[today] || DEFAULT_DAILY_METRICS(today);
+  const metrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
 
   const updateMetrics = (updates: Partial<UserDailyMetrics>) => {
-    if (data.isArchived) return;
+    if (data?.isArchived) return;
     updateData({
       ...data,
       dailyMetrics: {
-        ...data.dailyMetrics,
+        ...(data?.dailyMetrics || {}),
         [today]: { ...metrics, ...updates }
       }
     });
@@ -41,10 +41,10 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().split('T')[0];
-    const dayMetrics = data.dailyMetrics[dateStr];
+    const dayMetrics = data?.dailyMetrics?.[dateStr];
     return {
       date: dateStr.split('-').slice(2).join('/'),
-      level: dayMetrics?.energy_level || 0
+      level: dayMetrics?.energy_level ?? 0
     };
   });
 
@@ -56,8 +56,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
     return 'Elevated';
   };
 
-  // Fix: Explicitly cast to UserDailyMetrics[] to resolve 'unknown' property access error on morning_alignment_completed
-  const streak = (Object.values(data.dailyMetrics) as UserDailyMetrics[]).filter(m => m.morning_alignment_completed).length;
+  const streak = Object.values(data?.dailyMetrics || {}).filter(m => (m as UserDailyMetrics)?.morning_alignment_completed).length;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
@@ -87,16 +86,16 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Intention</label>
-              <p className="text-sm italic text-gray-700">{metrics.intention_text || 'No intention set yet.'}</p>
+              <p className="text-sm italic text-gray-700">{metrics?.intention_text || 'No intention set yet.'}</p>
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Commitment</label>
-              <p className="text-sm font-semibold text-gray-700">{metrics.focus_commitment || 'No commitment set yet.'}</p>
+              <p className="text-sm font-semibold text-gray-700">{metrics?.focus_commitment || 'No commitment set yet.'}</p>
             </div>
             <div className="pt-4 border-t border-[#eee]">
-               <div className={`p-4 rounded-2xl flex items-center justify-between ${metrics.morning_alignment_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>
+               <div className={`p-4 rounded-2xl flex items-center justify-between ${metrics?.morning_alignment_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>
                  <span className="text-xs font-bold uppercase tracking-widest">Status</span>
-                 <span className="text-xs font-bold">{metrics.morning_alignment_completed ? 'Aligned' : 'Pending'}</span>
+                 <span className="text-xs font-bold">{metrics?.morning_alignment_completed ? 'Aligned' : 'Pending'}</span>
                </div>
             </div>
           </div>
@@ -111,7 +110,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
             </div>
             <div className="text-right">
               <span className="text-xs font-bold text-gray-400 uppercase">Today's Level</span>
-              <p className="text-lg font-bold text-[#FF9933]">{getEnergyLabel(metrics.energy_level)} ({metrics.energy_level}/10)</p>
+              <p className="text-lg font-bold text-[#FF9933]">{getEnergyLabel(metrics?.energy_level ?? 5)} ({metrics?.energy_level ?? 5}/10)</p>
             </div>
           </div>
 
@@ -143,7 +142,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
               min="1"
               max="10"
               className="w-full h-2 bg-[#F8F7FC] rounded-lg appearance-none cursor-pointer accent-[#B19CD9] border border-[#eee]"
-              value={metrics.energy_level}
+              value={metrics?.energy_level ?? 5}
               onChange={(e) => updateMetrics({ energy_level: Number(e.target.value) })}
             />
           </div>
@@ -160,10 +159,10 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold text-gray-400 uppercase">Daily Total</span>
-                <p className="text-3xl font-bold text-[#10B981]">{metrics.meditation_minutes} <span className="text-sm font-normal text-gray-400">min</span></p>
+                <p className="text-3xl font-bold text-[#10B981]">{metrics?.meditation_minutes ?? 0} <span className="text-sm font-normal text-gray-400">min</span></p>
               </div>
               <button 
-                onClick={() => updateMetrics({ meditation_minutes: metrics.meditation_minutes + 5 })}
+                onClick={() => updateMetrics({ meditation_minutes: (metrics?.meditation_minutes ?? 0) + 5 })}
                 className="p-3 bg-[#D1F7E9] text-[#10B981] rounded-2xl hover:bg-[#10B981] hover:text-white transition-all shadow-sm"
               >
                 <Plus size={20} />
@@ -175,7 +174,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
                 <button
                   key={type}
                   onClick={() => updateMetrics({ meditation_type: type.toLowerCase() as any })}
-                  className={`px-3 py-2 text-[10px] font-bold rounded-xl border transition-all ${metrics.meditation_type === type.toLowerCase() ? 'bg-[#10B981] border-[#10B981] text-white' : 'border-[#eee] text-gray-400 hover:border-[#10B981]'}`}
+                  className={`px-3 py-2 text-[10px] font-bold rounded-xl border transition-all ${metrics?.meditation_type === type.toLowerCase() ? 'bg-[#10B981] border-[#10B981] text-white' : 'border-[#eee] text-gray-400 hover:border-[#10B981]'}`}
                 >
                   {type}
                 </button>
@@ -194,7 +193,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           <div className="space-y-6">
             <div>
               <span className="text-[10px] font-bold text-gray-400 uppercase">Active Minutes</span>
-              <p className="text-3xl font-bold text-[#B19CD9]">{metrics.movement_minutes} <span className="text-sm font-normal text-gray-400">min</span></p>
+              <p className="text-3xl font-bold text-[#B19CD9]">{metrics?.movement_minutes ?? 0} <span className="text-sm font-normal text-gray-400">min</span></p>
             </div>
             
             <div className="p-4 bg-[#F8F7FC] rounded-2xl border border-[#eee] border-dashed">
@@ -206,7 +205,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
                 <button 
                   key={mins}
                   onClick={() => updateMetrics({ movement_minutes: mins })}
-                  className={`py-3 rounded-xl border font-bold text-xs transition-all ${metrics.movement_minutes === mins ? 'bg-[#B19CD9] border-[#B19CD9] text-white' : 'bg-white border-[#eee] text-gray-400'}`}
+                  className={`py-3 rounded-xl border font-bold text-xs transition-all ${metrics?.movement_minutes === mins ? 'bg-[#B19CD9] border-[#B19CD9] text-white' : 'bg-white border-[#eee] text-gray-400'}`}
                 >
                   {mins}m
                 </button>
@@ -232,16 +231,17 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
               <button
                 key={action.id}
                 onClick={() => {
-                  const newActions = { ...metrics.financial_actions, [action.id]: !metrics.financial_actions[action.id as keyof typeof metrics.financial_actions] };
+                  const currentActions = metrics?.financial_actions || { loggedExpenses: false, reviewedBudget: false, savingsMove: false, paidDebt: false };
+                  const newActions = { ...currentActions, [action.id]: !currentActions[action.id as keyof typeof currentActions] };
                   updateMetrics({ financial_actions: newActions });
                 }}
-                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${metrics.financial_actions[action.id as keyof typeof metrics.financial_actions] ? 'bg-[#FFEEDD] border-[#FF9933] text-[#D4AF37]' : 'bg-white border-[#eee] text-gray-400'}`}
+                className={`w-full flex items-center justify-between p-4 rounded-2xl border transition-all ${metrics?.financial_actions?.[action.id as keyof typeof metrics.financial_actions] ? 'bg-[#FFEEDD] border-[#FF9933] text-[#D4AF37]' : 'bg-white border-[#eee] text-gray-400'}`}
               >
                 <div className="flex items-center gap-3">
                   {action.icon}
                   <span className="text-sm font-bold">{action.label}</span>
                 </div>
-                {metrics.financial_actions[action.id as keyof typeof metrics.financial_actions] ? <CheckCircle2 size={16} /> : <Circle size={16} />}
+                {metrics?.financial_actions?.[action.id as keyof typeof metrics.financial_actions] ? <CheckCircle2 size={16} /> : <Circle size={16} />}
               </button>
             ))}
           </div>
@@ -250,9 +250,5 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
     </div>
   );
 };
-
-const Plus: React.FC<{ size?: number; className?: string }> = ({ size = 20, className }) => (
-  <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7v14"/></svg>
-);
 
 export default TrackingCenter;

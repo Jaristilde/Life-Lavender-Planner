@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { FinancialData, Debt } from '../types';
 import { Plus, Trash2, BrainCircuit, Wallet, PieChart as ChartIcon, CreditCard, X, Save } from 'lucide-react';
@@ -17,7 +16,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
   const [newExpenseType, setNewExpenseType] = useState<'fixed' | 'variable'>('variable');
   const [newExpenseForm, setNewExpenseForm] = useState({ name: '', budget: 0, amount: 0 });
 
-  // Safe Fallbacks
+  // Safe Fallback for data
   const f = financialData || {
     income: 0,
     fixedExpenses: [],
@@ -27,9 +26,9 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
     weeklyPriorities: []
   };
 
-  const fixedExpenses = f.fixedExpenses || [];
-  const variableExpenses = f.variableExpenses || [];
-  const debts = f.debts || [];
+  const fixedExpenses = f.fixedExpenses ?? [];
+  const variableExpenses = f.variableExpenses ?? [];
+  const debts = f.debts ?? [];
 
   const updateFinancial = (newF: Partial<FinancialData>) => {
     if (isArchived) return;
@@ -51,9 +50,9 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
     };
 
     if (newExpenseType === 'fixed') {
-      updateFinancial({ fixedExpenses: [...fixedExpenses, newExpense] });
+      updateFinancial({ fixedExpenses: [...(f.fixedExpenses ?? []), newExpense] });
     } else {
-      updateFinancial({ variableExpenses: [...variableExpenses, newExpense] });
+      updateFinancial({ variableExpenses: [...(f.variableExpenses ?? []), newExpense] });
     }
 
     setShowAddModal(false);
@@ -68,9 +67,10 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
     setLoadingAI(false);
   };
 
-  const totalFixed = fixedExpenses.reduce((s, e) => s + (e?.amount ?? 0), 0);
-  const totalVariableBudget = variableExpenses.reduce((s, e) => s + (e?.budget ?? 0), 0);
-  const totalSpent = totalFixed + variableExpenses.reduce((s, e) => s + (e?.amount ?? 0), 0);
+  const totalFixed = (fixedExpenses || []).reduce((s, e) => s + (e?.amount ?? 0), 0);
+  const totalVariableBudget = (variableExpenses || []).reduce((s, e) => s + (e?.budget ?? 0), 0);
+  const totalVariableSpent = (variableExpenses || []).reduce((s, e) => s + (e?.amount ?? 0), 0);
+  const totalSpent = totalFixed + totalVariableSpent;
 
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -116,7 +116,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
               <input 
                 type="number" 
-                value={f.income}
+                value={f.income ?? 0}
                 readOnly={isArchived}
                 onChange={handleIncomeChange}
                 className="w-full pl-10 pr-4 py-3 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl text-xl font-bold focus:ring-2 focus:ring-[#B19CD9] outline-none"
@@ -127,27 +127,27 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
           <div className="grid grid-cols-2 gap-4 pt-4">
             <div className="p-4 bg-[#F8F7FC] rounded-xl">
               <span className="text-xs font-semibold text-gray-400 block mb-1">Total Fixed</span>
-              <span className="text-xl font-bold">${totalFixed.toLocaleString()}</span>
+              <span className="text-xl font-bold">${(totalFixed ?? 0).toLocaleString()}</span>
             </div>
             <div className="p-4 bg-[#F8F7FC] rounded-xl">
               <span className="text-xs font-semibold text-gray-400 block mb-1">Variable Budget</span>
-              <span className="text-xl font-bold">${totalVariableBudget.toLocaleString()}</span>
+              <span className="text-xl font-bold">${(totalVariableBudget ?? 0).toLocaleString()}</span>
             </div>
           </div>
 
           <div className="p-6 bg-[#B19CD9]/10 rounded-2xl">
             <div className="flex justify-between items-center mb-2">
                <span className="text-sm font-bold text-[#7B68A6]">Total Spent</span>
-               <span className="text-sm font-bold text-[#7B68A6]">${totalSpent.toLocaleString()}</span>
+               <span className="text-sm font-bold text-[#7B68A6]">${(totalSpent ?? 0).toLocaleString()}</span>
             </div>
             <div className="h-2 w-full bg-white rounded-full overflow-hidden">
                <div 
                  className="h-full bg-[#B19CD9] transition-all" 
-                 style={{ width: `${Math.min((totalSpent / (f.income || 1)) * 100, 100)}%` }} 
+                 style={{ width: `${Math.min(((totalSpent ?? 0) / (f.income || 1)) * 100, 100)}%` }} 
                />
             </div>
             <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-widest text-center">
-              {Math.round((totalSpent / (f.income || 1)) * 100)}% of income utilized
+              {Math.round(((totalSpent ?? 0) / (f.income || 1)) * 100)}% of income utilized
             </p>
           </div>
         </div>
@@ -164,14 +164,14 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 px-2">Fixed Expenses</h3>
               <div className="space-y-3">
-                {fixedExpenses.map((exp, idx) => (
+                {(fixedExpenses || []).map((exp, idx) => (
                   <div key={exp?.id || idx} className="flex items-center gap-4 bg-[#F8F7FC] p-3 rounded-xl border border-transparent hover:border-[#E6D5F0] transition-all">
                     <input 
                       className="flex-1 bg-transparent border-none outline-none font-medium"
                       value={exp?.name || ''}
                       readOnly={isArchived}
                       onChange={(e) => {
-                        const newList = [...fixedExpenses];
+                        const newList = [...(f.fixedExpenses ?? [])];
                         newList[idx] = { ...newList[idx], name: e.target.value };
                         updateFinancial({ fixedExpenses: newList });
                       }}
@@ -184,14 +184,14 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                         value={exp?.amount ?? 0}
                         readOnly={isArchived}
                         onChange={(e) => {
-                          const newList = [...fixedExpenses];
+                          const newList = [...(f.fixedExpenses ?? [])];
                           newList[idx] = { ...newList[idx], amount: Number(e.target.value) };
                           updateFinancial({ fixedExpenses: newList });
                         }}
                       />
                     </div>
                     <button 
-                      onClick={() => updateFinancial({ fixedExpenses: fixedExpenses.filter(i => i.id !== exp.id) })}
+                      onClick={() => updateFinancial({ fixedExpenses: (f.fixedExpenses ?? []).filter(i => i.id !== exp.id) })}
                       disabled={isArchived}
                       className="text-gray-300 hover:text-red-400 transition-colors disabled:opacity-30"
                     >
@@ -199,13 +199,16 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                     </button>
                   </div>
                 ))}
+                {(fixedExpenses || []).length === 0 && (
+                  <p className="text-center text-gray-400 text-sm italic py-4">No fixed expenses yet.</p>
+                )}
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 px-2">Variable & Lifestyle</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {variableExpenses.map((exp, idx) => (
+                {(variableExpenses || []).map((exp, idx) => (
                   <div key={exp?.id || idx} className="paper-card p-4 bg-white border-[#E6D5F0] hover:shadow-md transition-shadow">
                     <div className="flex justify-between mb-3">
                       <input 
@@ -213,13 +216,13 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                         value={exp?.name || ''}
                         readOnly={isArchived}
                         onChange={(e) => {
-                          const newList = [...variableExpenses];
+                          const newList = [...(f.variableExpenses ?? [])];
                           newList[idx] = { ...newList[idx], name: e.target.value };
                           updateFinancial({ variableExpenses: newList });
                         }}
                       />
                       <button 
-                        onClick={() => updateFinancial({ variableExpenses: variableExpenses.filter(i => i.id !== exp.id) })}
+                        onClick={() => updateFinancial({ variableExpenses: (f.variableExpenses ?? []).filter(i => i.id !== exp.id) })}
                         disabled={isArchived}
                         className="disabled:opacity-30"
                       >
@@ -235,7 +238,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                           value={exp?.budget ?? 0}
                           readOnly={isArchived}
                           onChange={(e) => {
-                            const newList = [...variableExpenses];
+                            const newList = [...(f.variableExpenses ?? [])];
                             newList[idx] = { ...newList[idx], budget: Number(e.target.value) };
                             updateFinancial({ variableExpenses: newList });
                           }}
@@ -249,7 +252,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                           value={exp?.amount ?? 0}
                           readOnly={isArchived}
                           onChange={(e) => {
-                            const newList = [...variableExpenses];
+                            const newList = [...(f.variableExpenses ?? [])];
                             newList[idx] = { ...newList[idx], amount: Number(e.target.value) };
                             updateFinancial({ variableExpenses: newList });
                           }}
@@ -264,6 +267,9 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                     </div>
                   </div>
                 ))}
+                {(variableExpenses || []).length === 0 && (
+                  <p className="col-span-2 text-center text-gray-400 text-sm italic py-4">No variable expenses yet.</p>
+                )}
               </div>
             </div>
           </div>
@@ -286,7 +292,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                   targetDate: '',
                   payments: []
                 };
-                updateFinancial({ debts: [...debts, newDebt] });
+                updateFinancial({ debts: [...(f.debts ?? []), newDebt] });
               }}
               disabled={isArchived}
               className="px-4 py-2 bg-[#E6D5F0] text-[#7B68A6] rounded-xl font-bold text-sm hover:bg-[#B19CD9] hover:text-white transition-all disabled:opacity-30"
@@ -296,14 +302,14 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {debts.map((debt, idx) => (
+            {(debts || []).map((debt, idx) => (
               <div key={debt?.id || idx} className="paper-card p-6 bg-gradient-to-br from-white to-[#F8F7FC] border-[#E6D5F0]">
                 <input 
                   className="text-lg font-bold bg-transparent border-none outline-none mb-4 w-full"
                   value={debt?.name || ''}
                   readOnly={isArchived}
                   onChange={(e) => {
-                    const newList = [...debts];
+                    const newList = [...(f.debts ?? [])];
                     newList[idx] = { ...newList[idx], name: e.target.value };
                     updateFinancial({ debts: newList });
                   }}
@@ -317,7 +323,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                       value={debt?.balance ?? 0}
                       readOnly={isArchived}
                       onChange={(e) => {
-                        const newList = [...debts];
+                        const newList = [...(f.debts ?? [])];
                         newList[idx] = { ...newList[idx], balance: Number(e.target.value) };
                         updateFinancial({ debts: newList });
                       }}
@@ -332,7 +338,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                         value={debt?.interestRate ?? 0}
                         readOnly={isArchived}
                         onChange={(e) => {
-                          const newList = [...debts];
+                          const newList = [...(f.debts ?? [])];
                           newList[idx] = { ...newList[idx], interestRate: Number(e.target.value) };
                           updateFinancial({ debts: newList });
                         }}
@@ -343,7 +349,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                 </div>
                 <div className="mt-6 pt-6 border-t border-[#eee]">
                    <button 
-                     onClick={() => updateFinancial({ debts: debts.filter(d => d.id !== debt.id) })}
+                     onClick={() => updateFinancial({ debts: (f.debts ?? []).filter(d => d.id !== debt.id) })}
                      disabled={isArchived}
                      className="text-xs font-bold text-red-300 hover:text-red-500 uppercase tracking-widest disabled:opacity-30"
                    >
@@ -352,10 +358,58 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                 </div>
               </div>
             ))}
+            {(debts || []).length === 0 && (
+              <p className="col-span-full text-center text-gray-400 text-sm italic py-8 border-2 border-dashed border-[#eee] rounded-2xl">
+                No debt accounts tracked yet. Focus on freedom.
+              </p>
+            )}
           </div>
         </div>
       </div>
-      {/* ... Add Modal ... */}
+
+      {showAddModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-[32px] p-8 shadow-2xl space-y-6">
+            <h2 className="text-2xl serif font-bold text-[#7B68A6]">Add Expense</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase">Name</label>
+                <input 
+                  className="w-full p-4 bg-[#F8F7FC] border rounded-2xl outline-none"
+                  value={newExpenseForm.name}
+                  onChange={e => setNewExpenseForm({...newExpenseForm, name: e.target.value})}
+                />
+              </div>
+              <div className="flex gap-4">
+                 <div className="flex-1">
+                   <label className="text-xs font-bold text-gray-400 uppercase">Budget/Amount</label>
+                   <input 
+                    type="number"
+                    className="w-full p-4 bg-[#F8F7FC] border rounded-2xl outline-none"
+                    value={newExpenseForm.budget}
+                    onChange={e => setNewExpenseForm({...newExpenseForm, budget: Number(e.target.value), amount: Number(e.target.value)})}
+                   />
+                 </div>
+                 <div className="flex-1">
+                    <label className="text-xs font-bold text-gray-400 uppercase">Category</label>
+                    <select 
+                      className="w-full p-4 bg-[#F8F7FC] border rounded-2xl outline-none"
+                      value={newExpenseType}
+                      onChange={e => setNewExpenseType(e.target.value as any)}
+                    >
+                      <option value="fixed">Fixed</option>
+                      <option value="variable">Variable</option>
+                    </select>
+                 </div>
+              </div>
+            </div>
+            <div className="flex gap-4">
+               <button onClick={() => setShowAddModal(false)} className="flex-1 py-4 border rounded-2xl font-bold">Cancel</button>
+               <button onClick={handleAddExpense} className="flex-1 py-4 bg-[#B19CD9] text-white rounded-2xl font-bold shadow-lg">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
