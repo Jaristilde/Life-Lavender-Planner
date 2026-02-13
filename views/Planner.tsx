@@ -28,10 +28,6 @@ interface WeeklyTask {
   completed: boolean;
 }
 
-interface WeeklyDayData {
-  tasks: WeeklyTask[];
-}
-
 interface WeeklyPlannerData {
   monday: WeeklyTask[];
   tuesday: WeeklyTask[];
@@ -42,6 +38,7 @@ interface WeeklyPlannerData {
   sunday: WeeklyTask[];
   todos: WeeklyTask[];
   notes: string;
+  quickNotes: string;
 }
 
 const DEFAULT_WEEKLY_DATA = (): WeeklyPlannerData => ({
@@ -53,7 +50,8 @@ const DEFAULT_WEEKLY_DATA = (): WeeklyPlannerData => ({
   saturday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
   sunday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
   todos: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
-  notes: ''
+  notes: '',
+  quickNotes: ''
 });
 
 const getMonday = (d: Date): Date => {
@@ -72,6 +70,56 @@ const getWeekNumber = (d: Date): number => {
   const week1 = new Date(date.getFullYear(), 0, 4);
   return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
 };
+
+const DayBox = ({ dayKey, dayIndex, tasks, dayLabel, dayDate, onToggle, onEdit, onRemove, onAdd }: {
+  dayKey: string;
+  dayIndex: number;
+  tasks: WeeklyTask[];
+  dayLabel: string;
+  dayDate: number;
+  onToggle: (taskId: string) => void;
+  onEdit: (taskId: string, text: string) => void;
+  onRemove: (taskId: string) => void;
+  onAdd: () => void;
+}) => (
+  <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+    <div className="bg-[#E6D5F0] px-4 py-2.5 flex items-center justify-between">
+      <span className="serif font-bold text-[#7B68A6] text-sm">{dayLabel}</span>
+      <span className="text-[10px] font-bold text-[#7B68A6]/60">{dayDate}</span>
+    </div>
+    <div className="flex-1 p-3 space-y-1 bg-[#F8F7FC]/50 min-h-[160px]">
+      {tasks.map(task => (
+        <div key={task.id} className="flex items-start gap-2 group">
+          <button
+            onClick={() => onToggle(task.id)}
+            className={`mt-1.5 w-4 h-4 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-[#B19CD9] border-[#B19CD9]' : 'border-[#B19CD9]/40 hover:border-[#B19CD9]'}`}
+          >
+            {task.completed && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+          </button>
+          <input
+            type="text"
+            className={`flex-1 bg-transparent text-xs py-1 outline-none border-b border-[#E6D5F0]/40 focus:border-[#B19CD9] transition-colors ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+            placeholder="Add task..."
+            value={task.text}
+            onChange={e => onEdit(task.id, e.target.value)}
+          />
+          <button
+            onClick={() => onRemove(task.id)}
+            className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 size={10} className="text-gray-300 hover:text-red-400" />
+          </button>
+        </div>
+      ))}
+    </div>
+    <button
+      onClick={onAdd}
+      className="flex items-center gap-1 px-3 py-2 text-[10px] font-bold text-[#B19CD9] hover:text-[#7B68A6] hover:bg-[#E6D5F0]/30 transition-colors border-t border-[#E6D5F0]/30"
+    >
+      <Plus size={12} /> Add line
+    </button>
+  </div>
+);
 
 const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'daily'>('daily');
@@ -623,49 +671,6 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
       return d.getDate();
     };
 
-    const DayBox = ({ dayKey, dayIndex }: { dayKey: keyof WeeklyPlannerData; dayIndex: number }) => {
-      const tasks = (week[dayKey] as WeeklyTask[]) || [];
-      return (
-        <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
-          <div className="bg-[#E6D5F0] px-4 py-2.5 flex items-center justify-between">
-            <span className="serif font-bold text-[#7B68A6] text-sm">{dayLabels[dayKey]}</span>
-            <span className="text-[10px] font-bold text-[#7B68A6]/60">{getDayDate(dayIndex)}</span>
-          </div>
-          <div className="flex-1 p-3 space-y-1 bg-[#F8F7FC]/50 min-h-[160px]">
-            {tasks.map(task => (
-              <div key={task.id} className="flex items-start gap-2 group">
-                <button
-                  onClick={() => updateDayTask(dayKey, task.id, { completed: !task.completed })}
-                  className={`mt-1.5 w-4 h-4 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-[#B19CD9] border-[#B19CD9]' : 'border-[#B19CD9]/40 hover:border-[#B19CD9]'}`}
-                >
-                  {task.completed && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                </button>
-                <input
-                  type="text"
-                  className={`flex-1 bg-transparent text-xs py-1 outline-none border-b border-[#E6D5F0]/40 focus:border-[#B19CD9] transition-colors ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
-                  placeholder="Add task..."
-                  value={task.text}
-                  onChange={e => updateDayTask(dayKey, task.id, { text: e.target.value })}
-                />
-                <button
-                  onClick={() => removeDayTask(dayKey, task.id)}
-                  className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <Trash2 size={10} className="text-gray-300 hover:text-red-400" />
-                </button>
-              </div>
-            ))}
-          </div>
-          <button
-            onClick={() => addDayTask(dayKey)}
-            className="flex items-center gap-1 px-3 py-2 text-[10px] font-bold text-[#B19CD9] hover:text-[#7B68A6] hover:bg-[#E6D5F0]/30 transition-colors border-t border-[#E6D5F0]/30"
-          >
-            <Plus size={12} /> Add line
-          </button>
-        </div>
-      );
-    };
-
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
 
@@ -673,7 +678,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         <div className="bg-white rounded-2xl shadow-sm border border-[#eee] overflow-hidden">
           <div className="flex items-center justify-between p-6 md:p-8">
             <div className="flex items-center gap-4">
-              <img src="/public/butterfly2.jpg" alt="" className="w-10 h-10 rounded-full object-cover shadow-sm border-2 border-[#E6D5F0]" />
+              <img src="/butterfly2.jpg" alt="" className="w-10 h-10 rounded-full object-cover shadow-sm border-2 border-[#E6D5F0]" />
               <div>
                 <h2 className="serif text-2xl md:text-3xl font-bold text-[#7B68A6]">Weekly Planner</h2>
                 <div className="flex items-center gap-3 mt-1">
@@ -703,10 +708,10 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
 
         {/* DAY GRID — 4x2 on desktop, single column on mobile */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dayKeys.slice(0, 4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i} />)}
+          {dayKeys.slice(0, 4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i} tasks={(week[dk] as WeeklyTask[]) || []} dayLabel={dayLabels[dk]} dayDate={getDayDate(i)} onToggle={(id) => updateDayTask(dk, id, { completed: !(week[dk] as WeeklyTask[]).find(t => t.id === id)?.completed })} onEdit={(id, text) => updateDayTask(dk, id, { text })} onRemove={(id) => removeDayTask(dk, id)} onAdd={() => addDayTask(dk)} />)}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {dayKeys.slice(4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i + 4} />)}
+          {dayKeys.slice(4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i + 4} tasks={(week[dk] as WeeklyTask[]) || []} dayLabel={dayLabels[dk]} dayDate={getDayDate(i + 4)} onToggle={(id) => updateDayTask(dk, id, { completed: !(week[dk] as WeeklyTask[]).find(t => t.id === id)?.completed })} onEdit={(id, text) => updateDayTask(dk, id, { text })} onRemove={(id) => removeDayTask(dk, id)} onAdd={() => addDayTask(dk)} />)}
           {/* Notes box in the 8th slot */}
           <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
             <div className="bg-[#E6D5F0] px-4 py-2.5">
@@ -716,8 +721,8 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               <textarea
                 className="w-full h-full min-h-[160px] bg-transparent text-xs text-gray-700 outline-none resize-none leading-relaxed placeholder:italic placeholder:text-[#B19CD9]/40"
                 placeholder="Jot down anything for this week..."
-                value={week.notes || ''}
-                onChange={e => updateWeek({ notes: e.target.value })}
+                value={week.quickNotes || ''}
+                onChange={e => updateWeek({ quickNotes: e.target.value })}
               />
             </div>
           </div>
