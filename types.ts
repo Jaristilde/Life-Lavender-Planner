@@ -72,6 +72,11 @@ export interface BlueprintData {
   topIntentions: string[];
 }
 
+export interface KanbanItem {
+  id: string;
+  text: string;
+}
+
 export interface UserDailyMetrics {
   date: string;
   morning_alignment_completed: boolean;
@@ -88,6 +93,22 @@ export interface UserDailyMetrics {
     reviewedBudget: boolean;
     savingsMove: boolean;
     paidDebt: boolean;
+  };
+  // Paper Planner Extended Fields
+  gratitude: string[];
+  daily_goals: { text: string; completed: boolean }[];
+  self_care: { text: string; completed: boolean }[];
+  mood: 'rough' | 'meh' | 'good' | 'amazing' | null;
+  daily_self_care_act: string;
+  self_love_statement: string;
+  physical_activity: string;
+  hydration_count: number;
+  tomorrow_focus: string[];
+  kanban: {
+    todo: KanbanItem[];
+    inProgress: KanbanItem[];
+    done: KanbanItem[];
+    notes: KanbanItem[];
   };
 }
 

@@ -127,6 +127,30 @@ export const DEFAULT_DAILY_METRICS = (date: string): UserDailyMetrics => ({
     reviewedBudget: false,
     savingsMove: false,
     paidDebt: false
+  },
+  gratitude: ['', '', ''],
+  daily_goals: [
+    { text: '', completed: false },
+    { text: '', completed: false },
+    { text: '', completed: false }
+  ],
+  self_care: [
+    { text: '', completed: false },
+    { text: '', completed: false },
+    { text: '', completed: false },
+    { text: '', completed: false }
+  ],
+  mood: null,
+  daily_self_care_act: '',
+  self_love_statement: '',
+  physical_activity: '',
+  hydration_count: 0,
+  tomorrow_focus: ['', ''],
+  kanban: {
+    todo: [],
+    inProgress: [],
+    done: [],
+    notes: []
   }
 });
 
