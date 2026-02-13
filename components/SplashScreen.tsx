@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 const ButterflyIcon = ({ size = 24, className = "" }: { size?: number, className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -7,9 +7,20 @@ const ButterflyIcon = ({ size = 24, className = "" }: { size?: number, className
   </svg>
 );
 
-const SplashScreen: React.FC = () => {
+interface SplashScreenProps {
+  fadingOut?: boolean;
+}
+
+const SplashScreen: React.FC<SplashScreenProps> = ({ fadingOut = false }) => {
   return (
-    <div className="fixed inset-0 z-[500] bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex flex-col items-center justify-center">
+    <div
+      className="fixed inset-0 z-[500] bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex flex-col items-center justify-center"
+      style={{
+        transition: 'opacity 500ms ease-out',
+        opacity: fadingOut ? 0 : 1,
+        pointerEvents: fadingOut ? 'none' : 'auto'
+      }}
+    >
       <div className="relative">
         <div className="absolute inset-0 animate-ping opacity-20 bg-white rounded-full" />
         <ButterflyIcon size={80} className="text-white relative animate-pulse" />

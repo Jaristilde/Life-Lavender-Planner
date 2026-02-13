@@ -30,6 +30,8 @@ const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [splashFading, setSplashFading] = useState(false);
+  const [splashVisible, setSplashVisible] = useState(true);
   const [activeYearId, setActiveYearId] = useState<string>('');
   const [activeYearData, setActiveYearData] = useState<any>(null);
   const [allYears, setAllYears] = useState<any[]>([]);
@@ -37,18 +39,32 @@ const App: React.FC = () => {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
-  
+
   const saveTimeout = useRef<any>(null);
   const authChecked = useRef(false);
+  const splashStart = useRef(Date.now());
+
+  const finishSplash = () => {
+    const elapsed = Date.now() - splashStart.current;
+    const minDisplay = 1500;
+    const remaining = Math.max(0, minDisplay - elapsed);
+
+    setTimeout(() => {
+      setSplashFading(true);
+      setTimeout(() => {
+        setSplashVisible(false);
+        setLoading(false);
+      }, 500);
+    }, remaining);
+  };
 
   useEffect(() => {
     let mounted = true;
 
     const initAuth = async () => {
-      // Security: Add a global timeout to prevent infinite splash screen
       const timeout = setTimeout(() => {
-        if (mounted && loading) setLoading(false);
-      }, 5000);
+        if (mounted && loading) finishSplash();
+      }, 3000);
 
       try {
         const currentUser = await authService.getUser();
@@ -58,11 +74,11 @@ const App: React.FC = () => {
           setUser(currentUser);
           await loadUserData(currentUser.id, mounted);
         } else {
-          setLoading(false);
+          finishSplash();
         }
       } catch (err) {
         console.error("Auth init failed:", err);
-        if (mounted) setLoading(false);
+        if (mounted) finishSplash();
       } finally {
         clearTimeout(timeout);
       }
@@ -82,7 +98,7 @@ const App: React.FC = () => {
         setUser(null);
         setProfile(null);
         setActiveYearData(null);
-        setLoading(false);
+        finishSplash();
       }
     });
 
@@ -132,10 +148,10 @@ const App: React.FC = () => {
 
       setActiveYearId(dbYear.id);
       setActiveYearData(mergedData);
-      setLoading(false);
+      finishSplash();
     } catch (err) {
       console.error('Failed to load data:', err);
-      if (isMounted) setLoading(false);
+      if (isMounted) finishSplash();
     }
   };
 
@@ -180,7 +196,9 @@ const App: React.FC = () => {
     }, 1000);
   };
 
-  if (loading) return <SplashScreen />;
+  if (loading || splashVisible) {
+    return <SplashScreen fadingOut={splashFading} />;
+  }
   if (!user) return <AuthScreen />;
 
   if (profile && !profile.onboarding_completed) {
