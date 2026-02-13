@@ -311,7 +311,7 @@ const App: React.FC = () => {
 
       <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''} pb-[90px] lg:pb-0`}>
         <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-[#eee] sticky top-0 z-30">
-          <h1 className="text-xl serif font-bold text-[#7B68A6]">Reset & Rebuild</h1>
+          <h1 className="text-xl serif font-bold text-[#7B68A6]">Lavender Life Planner</h1>
           <div className="flex items-center gap-2">
              {saveStatus === 'saving' && <Loader2 size={16} className="text-[#B19CD9] animate-spin" />}
              {saveStatus === 'saved' && <CheckCircle2 size={16} className="text-green-400" />}
