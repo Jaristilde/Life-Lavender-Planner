@@ -242,10 +242,13 @@ const App: React.FC = () => {
           data={activeYearData}
           updateData={(d) => updateYearField('wellness_data', d.wellness)}
         />;
-      case 'planner': 
-        return <Planner 
+      case 'planner':
+        return <Planner
           data={activeYearData}
-          updateData={(d) => updateYearField('planner', d.plannerFocus)}
+          updateData={(d) => {
+            if (d.plannerFocus !== activeYearData.plannerFocus) updateYearField('planner', d.plannerFocus);
+            if (d.dailyMetrics !== activeYearData.dailyMetrics) updateYearField('daily_todos', d.dailyMetrics);
+          }}
           googleSync={{ enabled: false, syncFrequency: 'manual', showEvents: true, isConnected: false }}
           updateGoogleSync={() => {}}
         />;

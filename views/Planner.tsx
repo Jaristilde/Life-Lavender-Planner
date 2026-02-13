@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { YearData, GoogleSyncSettings, PlannerFocus, UserDailyMetrics, KanbanItem } from '../types';
 import {
   ChevronLeft,
@@ -63,15 +63,21 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
     const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
     const handleKanbanAdd = (column: keyof UserDailyMetrics['kanban']) => {
-      const text = prompt('Enter task description:');
-      if (!text) return;
-      const newItem: KanbanItem = { id: Math.random().toString(36).substr(2, 9), text };
+      const newItem: KanbanItem = { id: Math.random().toString(36).substr(2, 9), text: '' };
       const newKanban = { ...metrics.kanban, [column]: [...(metrics.kanban[column] || []), newItem] };
       updateDailyMetrics(selectedDate, { kanban: newKanban });
     };
 
     const handleKanbanRemove = (column: keyof UserDailyMetrics['kanban'], id: string) => {
       const newKanban = { ...metrics.kanban, [column]: (metrics.kanban[column] || []).filter(i => i.id !== id) };
+      updateDailyMetrics(selectedDate, { kanban: newKanban });
+    };
+
+    const handleKanbanEdit = (column: keyof UserDailyMetrics['kanban'], id: string, newText: string) => {
+      const newKanban = {
+        ...metrics.kanban,
+        [column]: (metrics.kanban[column] || []).map(i => i.id === id ? { ...i, text: newText } : i)
+      };
       updateDailyMetrics(selectedDate, { kanban: newKanban });
     };
 
@@ -340,55 +346,90 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           </div>
         </section>
 
-        {/* 11. KANBAN BOARD */}
+        {/* 11. KANBAN BOARD — Lavender Sticky Notes */}
         <section className="bg-[#F8F7FC] p-8 space-y-8 border-t border-[#eee]">
           <h3 className="serif text-3xl font-bold text-[#7B68A6] text-center">My Task Board</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(['todo', 'inProgress', 'done', 'notes'] as Array<keyof UserDailyMetrics['kanban']>).map(colKey => (
-              <div
-                key={colKey}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => handleDrop(e, colKey)}
-                className="flex flex-col bg-white rounded-2xl shadow-sm border border-[#E6D5F0] overflow-hidden min-h-[300px]"
-              >
-                <div className="bg-[#B19CD9] p-3 flex justify-between items-center text-white">
-                  <span className="font-bold uppercase text-[10px] tracking-[0.2em]">
-                    {colKey === 'inProgress' ? 'In Progress' : colKey.toUpperCase()}
-                  </span>
-                  <button
-                    onClick={() => handleKanbanAdd(colKey)}
-                    className="p-1 hover:bg-white/20 rounded-lg transition-colors"
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-                <div className="flex-1 p-3 space-y-3 custom-scrollbar overflow-y-auto">
-                  {(metrics.kanban[colKey] || []).map(item => (
-                    <div
-                      key={item.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, item.id, colKey)}
-                      className="p-4 bg-[#F8F7FC] border border-[#E6D5F0]/50 rounded-xl shadow-sm group hover:shadow-md hover:border-[#B19CD9]/40 transition-all cursor-grab active:cursor-grabbing"
+            {(['todo', 'inProgress', 'done', 'notes'] as Array<keyof UserDailyMetrics['kanban']>).map(colKey => {
+              const colLabels: Record<string, string> = {
+                todo: '📝 To Do',
+                inProgress: '⏳ In Progress',
+                done: '✅ Done',
+                notes: '💭 Notes'
+              };
+              const colColors: Record<string, { bg: string; border: string; note: string; noteBorder: string }> = {
+                todo: { bg: 'bg-[#F3EEFA]', border: 'border-[#D4C4E8]', note: 'bg-[#E8DDF5]', noteBorder: 'border-[#C9B8E0]' },
+                inProgress: { bg: 'bg-[#FDF4E8]', border: 'border-[#F0DFC0]', note: 'bg-[#FBF0DC]', noteBorder: 'border-[#E8D5B0]' },
+                done: { bg: 'bg-[#E8F5E8]', border: 'border-[#C4E4C4]', note: 'bg-[#DCF0DC]', noteBorder: 'border-[#B8DBB8]' },
+                notes: { bg: 'bg-[#EDE8F8]', border: 'border-[#D0C4ED]', note: 'bg-[#E0D8F2]', noteBorder: 'border-[#C4B8E0]' }
+              };
+              const colors = colColors[colKey];
+
+              return (
+                <div
+                  key={colKey}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); }}
+                  onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); }}
+                  onDrop={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }}
+                  className={`flex flex-col ${colors.bg} rounded-2xl border ${colors.border} overflow-hidden min-h-[320px] transition-all`}
+                >
+                  {/* Column Header */}
+                  <div className="px-4 py-3 flex justify-between items-center border-b border-white/50">
+                    <span className="font-bold text-[#7B68A6] text-sm">
+                      {colLabels[colKey]}
+                    </span>
+                    <button
+                      onClick={() => handleKanbanAdd(colKey)}
+                      className="w-7 h-7 flex items-center justify-center bg-white/60 hover:bg-white text-[#7B68A6] rounded-full transition-all hover:shadow-md hover:scale-110"
+                      title="Add sticky note"
                     >
-                      <div className="flex gap-2">
-                        <GripVertical size={14} className="text-gray-300 mt-1" />
-                        <p className="flex-1 text-sm text-gray-700 font-medium leading-relaxed">{item.text}</p>
+                      <Plus size={16} strokeWidth={2.5} />
+                    </button>
+                  </div>
+
+                  {/* Sticky Notes */}
+                  <div className="flex-1 p-3 space-y-3 custom-scrollbar overflow-y-auto">
+                    {(metrics.kanban[colKey] || []).map(item => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, item.id, colKey)}
+                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />
+                          <textarea
+                            className="flex-1 bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
+                            placeholder="Write here..."
+                            value={item.text}
+                            rows={Math.max(2, Math.ceil((item.text.length || 1) / 25))}
+                            onChange={(e) => handleKanbanEdit(colKey, item.id, e.target.value)}
+                            onMouseDown={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                        <div className="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => handleKanbanRemove(colKey, item.id)}
+                            className="p-1 rounded-full hover:bg-red-100 transition-colors"
+                          >
+                            <Trash2 size={12} className="text-red-300 hover:text-red-500" />
+                          </button>
+                        </div>
                       </div>
-                      <div className="mt-3 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => handleKanbanRemove(colKey, item.id)}>
-                          <Trash2 size={12} className="text-red-300 hover:text-red-500" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {(!metrics.kanban[colKey] || metrics.kanban[colKey].length === 0) && (
-                    <div className="flex-1 flex items-center justify-center py-10 opacity-20 italic text-[10px] text-gray-500">
-                      Empty
-                    </div>
-                  )}
+                    ))}
+                    {(!metrics.kanban[colKey] || metrics.kanban[colKey].length === 0) && (
+                      <button
+                        onClick={() => handleKanbanAdd(colKey)}
+                        className="w-full flex flex-col items-center justify-center py-10 opacity-40 hover:opacity-70 transition-opacity cursor-pointer"
+                      >
+                        <Plus size={24} className="text-[#B19CD9] mb-2" />
+                        <span className="italic text-xs text-[#7B68A6]">Add a sticky note</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
