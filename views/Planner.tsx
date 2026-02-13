@@ -10,7 +10,8 @@ import {
   CheckSquare,
   Plus,
   GripVertical,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { DEFAULT_DAILY_METRICS } from '../constants';
 
@@ -21,10 +22,63 @@ interface PlannerProps {
   updateGoogleSync: (s: Partial<GoogleSyncSettings>) => void;
 }
 
+interface WeeklyTask {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
+interface WeeklyDayData {
+  tasks: WeeklyTask[];
+}
+
+interface WeeklyPlannerData {
+  monday: WeeklyTask[];
+  tuesday: WeeklyTask[];
+  wednesday: WeeklyTask[];
+  thursday: WeeklyTask[];
+  friday: WeeklyTask[];
+  saturday: WeeklyTask[];
+  sunday: WeeklyTask[];
+  todos: WeeklyTask[];
+  notes: string;
+}
+
+const DEFAULT_WEEKLY_DATA = (): WeeklyPlannerData => ({
+  monday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  tuesday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  wednesday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  thursday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  friday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  saturday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  sunday: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  todos: [{ id: '1', text: '', completed: false }, { id: '2', text: '', completed: false }, { id: '3', text: '', completed: false }, { id: '4', text: '', completed: false }],
+  notes: ''
+});
+
+const getMonday = (d: Date): Date => {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  date.setDate(diff);
+  date.setHours(0, 0, 0, 0);
+  return date;
+};
+
+const getWeekNumber = (d: Date): number => {
+  const date = new Date(d);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7));
+  const week1 = new Date(date.getFullYear(), 0, 4);
+  return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7);
+};
+
 const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'daily'>('daily');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedWeekStart, setSelectedWeekStart] = useState(() => getMonday(new Date()).toISOString().split('T')[0]);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -517,32 +571,239 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   };
 
   const renderWeeklyView = () => {
-    const weekData = pFocus?.weeklyFocus?.[`${selectedMonth}-1`] || {
-      outcomes: ['', '', ''], financialMove: '', energyFocus: '', eliminate: '', affirmation: ''
+    const weekKey = selectedWeekStart;
+    const weekRaw = pFocus?.weeklyFocus?.[weekKey] as any;
+    const week: WeeklyPlannerData = weekRaw && weekRaw.monday ? weekRaw : DEFAULT_WEEKLY_DATA();
+
+    const mondayDate = new Date(selectedWeekStart + 'T00:00:00');
+    const weekNum = getWeekNumber(mondayDate);
+    const weekMonthName = months[mondayDate.getMonth()];
+
+    const updateWeek = (updates: Partial<WeeklyPlannerData>) => {
+      if (data?.isArchived) return;
+      const weeks = { ...(pFocus.weeklyFocus || {}) };
+      weeks[weekKey] = { ...week, ...updates };
+      updatePlanner({ weeklyFocus: weeks });
     };
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-right-4 duration-500">
-         <div className="paper-card p-6 bg-white border-t-8 border-[#7B68A6] space-y-6">
-           <h3 className="font-bold text-[#7B68A6] uppercase text-xs tracking-widest">Core Outcomes</h3>
-           <div className="space-y-4">
-              {[0, 1, 2].map((i) => (
+
+    const navigateWeek = (dir: number) => {
+      const d = new Date(selectedWeekStart + 'T00:00:00');
+      d.setDate(d.getDate() + dir * 7);
+      setSelectedWeekStart(d.toISOString().split('T')[0]);
+    };
+
+    const updateDayTask = (day: keyof WeeklyPlannerData, taskId: string, updates: Partial<WeeklyTask>) => {
+      const tasks = [...(week[day] as WeeklyTask[])];
+      const idx = tasks.findIndex(t => t.id === taskId);
+      if (idx === -1) return;
+      tasks[idx] = { ...tasks[idx], ...updates };
+      updateWeek({ [day]: tasks } as any);
+    };
+
+    const addDayTask = (day: keyof WeeklyPlannerData) => {
+      const tasks = [...(week[day] as WeeklyTask[])];
+      tasks.push({ id: Math.random().toString(36).substr(2, 9), text: '', completed: false });
+      updateWeek({ [day]: tasks } as any);
+    };
+
+    const removeDayTask = (day: keyof WeeklyPlannerData, taskId: string) => {
+      const tasks = (week[day] as WeeklyTask[]).filter(t => t.id !== taskId);
+      updateWeek({ [day]: tasks } as any);
+    };
+
+    const dayKeys: Array<keyof WeeklyPlannerData> = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    const dayLabels: Record<string, string> = {
+      monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday',
+      friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday'
+    };
+
+    const getDayDate = (dayIndex: number) => {
+      const d = new Date(selectedWeekStart + 'T00:00:00');
+      d.setDate(d.getDate() + dayIndex);
+      return d.getDate();
+    };
+
+    const DayBox = ({ dayKey, dayIndex }: { dayKey: keyof WeeklyPlannerData; dayIndex: number }) => {
+      const tasks = (week[dayKey] as WeeklyTask[]) || [];
+      return (
+        <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+          <div className="bg-[#E6D5F0] px-4 py-2.5 flex items-center justify-between">
+            <span className="serif font-bold text-[#7B68A6] text-sm">{dayLabels[dayKey]}</span>
+            <span className="text-[10px] font-bold text-[#7B68A6]/60">{getDayDate(dayIndex)}</span>
+          </div>
+          <div className="flex-1 p-3 space-y-1 bg-[#F8F7FC]/50 min-h-[160px]">
+            {tasks.map(task => (
+              <div key={task.id} className="flex items-start gap-2 group">
+                <button
+                  onClick={() => updateDayTask(dayKey, task.id, { completed: !task.completed })}
+                  className={`mt-1.5 w-4 h-4 rounded-full border-[1.5px] flex-shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-[#B19CD9] border-[#B19CD9]' : 'border-[#B19CD9]/40 hover:border-[#B19CD9]'}`}
+                >
+                  {task.completed && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                </button>
                 <input
-                  key={i}
-                  className="w-full bg-transparent border-b border-[#E6D5F0] py-2 outline-none text-sm"
-                  placeholder={`Outcome ${i+1}`}
-                  value={weekData.outcomes[i] || ''}
-                  readOnly={data?.isArchived}
-                  onChange={(e) => {
-                    const next = [...weekData.outcomes];
-                    next[i] = e.target.value;
-                    const weeks = { ...(pFocus.weeklyFocus || {}) };
-                    weeks[`${selectedMonth}-1`] = { ...weekData, outcomes: next };
-                    updatePlanner({ weeklyFocus: weeks });
-                  }}
+                  type="text"
+                  className={`flex-1 bg-transparent text-xs py-1 outline-none border-b border-[#E6D5F0]/40 focus:border-[#B19CD9] transition-colors ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+                  placeholder="Add task..."
+                  value={task.text}
+                  onChange={e => updateDayTask(dayKey, task.id, { text: e.target.value })}
                 />
+                <button
+                  onClick={() => removeDayTask(dayKey, task.id)}
+                  className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <Trash2 size={10} className="text-gray-300 hover:text-red-400" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => addDayTask(dayKey)}
+            className="flex items-center gap-1 px-3 py-2 text-[10px] font-bold text-[#B19CD9] hover:text-[#7B68A6] hover:bg-[#E6D5F0]/30 transition-colors border-t border-[#E6D5F0]/30"
+          >
+            <Plus size={12} /> Add line
+          </button>
+        </div>
+      );
+    };
+
+    return (
+      <div className="space-y-6 animate-in fade-in duration-500">
+
+        {/* WEEKLY HEADER */}
+        <div className="bg-white rounded-2xl shadow-sm border border-[#eee] overflow-hidden">
+          <div className="flex items-center justify-between p-6 md:p-8">
+            <div className="flex items-center gap-4">
+              <img src="/public/butterfly2.jpg" alt="" className="w-10 h-10 rounded-full object-cover shadow-sm border-2 border-[#E6D5F0]" />
+              <div>
+                <h2 className="serif text-2xl md:text-3xl font-bold text-[#7B68A6]">Weekly Planner</h2>
+                <div className="flex items-center gap-3 mt-1">
+                  <button onClick={() => navigateWeek(-1)} className="p-1 hover:bg-[#F8F7FC] rounded-full transition-colors"><ChevronLeft size={16} className="text-[#B19CD9]" /></button>
+                  <span className="text-sm font-bold text-[#7B68A6]">{weekMonthName} &bull; Week {weekNum}</span>
+                  <button onClick={() => navigateWeek(1)} className="p-1 hover:bg-[#F8F7FC] rounded-full transition-colors"><ChevronRight size={16} className="text-[#B19CD9]" /></button>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowSyncModal(true)}
+              className="hidden sm:flex items-center gap-2 px-4 py-2 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl text-[11px] font-bold text-[#7B68A6] hover:bg-[#E6D5F0] transition-colors"
+            >
+              <RefreshCw size={14} /> Sync Calendar
+            </button>
+          </div>
+          <div className="px-6 md:px-8 pb-4">
+            <div className="flex gap-1 text-[10px] font-bold text-[#B19CD9]/60 uppercase tracking-widest">
+              {dayKeys.map((dk, i) => {
+                const d = new Date(selectedWeekStart + 'T00:00:00');
+                d.setDate(d.getDate() + i);
+                return <span key={dk} className="flex-1 text-center">{d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>;
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* DAY GRID — 4x2 on desktop, single column on mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {dayKeys.slice(0, 4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i} />)}
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {dayKeys.slice(4).map((dk, i) => <DayBox key={dk} dayKey={dk} dayIndex={i + 4} />)}
+          {/* Notes box in the 8th slot */}
+          <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden flex flex-col">
+            <div className="bg-[#E6D5F0] px-4 py-2.5">
+              <span className="serif font-bold text-[#7B68A6] text-sm">Quick Notes</span>
+            </div>
+            <div className="flex-1 p-3 bg-[#F8F7FC]/50">
+              <textarea
+                className="w-full h-full min-h-[160px] bg-transparent text-xs text-gray-700 outline-none resize-none leading-relaxed placeholder:italic placeholder:text-[#B19CD9]/40"
+                placeholder="Jot down anything for this week..."
+                value={week.notes || ''}
+                onChange={e => updateWeek({ notes: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* BOTTOM ROW: To Do List + Weekly Notes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* To Do List */}
+          <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="bg-[#E6D5F0] px-4 py-2.5 flex items-center justify-between">
+              <span className="serif font-bold text-[#7B68A6] text-sm">To Do List</span>
+              <span className="text-[10px] font-bold text-[#7B68A6]/50">
+                {(week.todos || []).filter(t => t.completed).length}/{(week.todos || []).length}
+              </span>
+            </div>
+            <div className="p-4 space-y-1">
+              {(week.todos || []).map(task => (
+                <div key={task.id} className="flex items-start gap-3 group">
+                  <button
+                    onClick={() => updateDayTask('todos', task.id, { completed: !task.completed })}
+                    className={`mt-1 w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${task.completed ? 'bg-[#7B68A6] border-[#7B68A6]' : 'border-[#B19CD9]/50 hover:border-[#B19CD9]'}`}
+                  >
+                    {task.completed && <div className="w-2 h-2 bg-white rounded-full" />}
+                  </button>
+                  <input
+                    type="text"
+                    className={`flex-1 bg-transparent text-sm py-1 outline-none border-b border-[#E6D5F0]/40 focus:border-[#B19CD9] transition-colors ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
+                    placeholder="Add a to-do..."
+                    value={task.text}
+                    onChange={e => updateDayTask('todos', task.id, { text: e.target.value })}
+                  />
+                  <button
+                    onClick={() => removeDayTask('todos', task.id)}
+                    className="mt-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Trash2 size={12} className="text-gray-300 hover:text-red-400" />
+                  </button>
+                </div>
               ))}
-           </div>
-         </div>
+            </div>
+            <button
+              onClick={() => addDayTask('todos')}
+              className="w-full flex items-center justify-center gap-1 px-3 py-2.5 text-xs font-bold text-[#B19CD9] hover:text-[#7B68A6] hover:bg-[#E6D5F0]/30 transition-colors border-t border-[#E6D5F0]/30"
+            >
+              <Plus size={14} /> Add task
+            </button>
+          </div>
+
+          {/* Weekly Notes */}
+          <div className="bg-white rounded-xl border border-[#E6D5F0] shadow-[0_2px_8px_rgba(0,0,0,0.04)] overflow-hidden">
+            <div className="bg-[#E6D5F0] px-4 py-2.5">
+              <span className="serif font-bold text-[#7B68A6] text-sm">Weekly Notes & Reflections</span>
+            </div>
+            <div className="p-4">
+              <textarea
+                className="w-full min-h-[200px] bg-[#F8F7FC]/50 rounded-lg p-3 text-sm text-gray-700 outline-none resize-none leading-relaxed border border-[#E6D5F0]/30 focus:border-[#B19CD9] transition-colors placeholder:italic placeholder:text-[#B19CD9]/40"
+                placeholder="Reflect on your week, write intentions, capture thoughts..."
+                value={week.notes || ''}
+                onChange={e => updateWeek({ notes: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* GOOGLE CALENDAR SYNC MODAL */}
+        {showSyncModal && (
+          <div className="fixed inset-0 z-[100] bg-black/30 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowSyncModal(false)}>
+            <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center space-y-4" onClick={e => e.stopPropagation()}>
+              <div className="w-16 h-16 mx-auto bg-[#E6D5F0] rounded-full flex items-center justify-center">
+                <CalendarIcon size={32} className="text-[#7B68A6]" />
+              </div>
+              <h3 className="serif text-xl font-bold text-[#7B68A6]">Google Calendar Sync</h3>
+              <p className="text-sm text-gray-500">Sync your weekly planner with Google Calendar to see events right inside your planner.</p>
+              <div className="bg-[#F8F7FC] rounded-xl p-4 border border-[#E6D5F0]">
+                <p className="text-sm font-bold text-[#B19CD9]">Coming Soon!</p>
+                <p className="text-[10px] text-gray-400 mt-1">We're working on this integration.</p>
+              </div>
+              <button
+                onClick={() => setShowSyncModal(false)}
+                className="w-full py-3 bg-[#B19CD9] text-white font-bold rounded-xl hover:bg-[#7B68A6] transition-colors"
+              >
+                Got it!
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
