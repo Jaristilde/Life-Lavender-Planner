@@ -3,7 +3,7 @@ import React from 'react';
 import {
   Home,
   Wallet,
-  Heart,
+  Sparkles,
   Menu,
   ClipboardList
 } from 'lucide-react';
@@ -18,8 +18,8 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home },
     { id: 'planner', label: 'Planner', icon: ClipboardList },
+    { id: 'vision', label: 'Vision', icon: Sparkles },
     { id: 'financial', label: 'Finance', icon: Wallet },
-    { id: 'wellness', label: 'Wellness', icon: Heart },
     { id: 'more', label: 'More', icon: Menu },
   ];
 

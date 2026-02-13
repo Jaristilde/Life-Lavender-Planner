@@ -1,18 +1,19 @@
 
 import React, { useEffect, useState } from 'react';
-import { 
-  X, 
-  BarChart3, 
-  Target, 
-  Sparkles, 
-  CalendarCheck, 
-  BookOpen, 
-  History, 
+import {
+  X,
+  BarChart3,
+  Target,
+  Sparkles,
+  CalendarCheck,
+  BookOpen,
+  History,
   Settings,
   Plus,
   ChevronRight,
   Info,
   Calendar,
+  Heart,
   Library as LibraryIcon
 } from 'lucide-react';
 
@@ -55,6 +56,7 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
     { id: 'planner', label: 'Planner', icon: Calendar },
     { id: 'tracking', label: 'Tracking Center', icon: BarChart3 },
     { id: 'vision', label: 'Vision Board', icon: Target },
+    { id: 'wellness', label: 'Wellness', icon: Heart },
     { id: 'simplify', label: '30-Day Reset', icon: Sparkles },
     { id: 'monthlyReset', label: 'Monthly Reset', icon: CalendarCheck },
     { id: 'workbook', label: 'Money Reset', icon: BookOpen },
