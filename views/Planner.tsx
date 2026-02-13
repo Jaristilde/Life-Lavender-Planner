@@ -613,12 +613,46 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               </div>
            </div>
 
-           <div className="grid grid-cols-7 gap-2">
-              {Array.from({ length: 35 }).map((_, i) => (
-                <div key={i} className="aspect-square border border-[#F8F7FC] rounded-xl flex flex-col p-2 hover:bg-[#F8F7FC] transition-colors cursor-pointer group">
-                  <span className="text-[10px] font-bold text-gray-300 group-hover:text-[#B19CD9]">{i + 1}</span>
-                </div>
+           {/* Day-of-week headers */}
+           <div className="grid grid-cols-7 gap-2 mb-1">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => (
+                <div key={d} className="text-center text-[10px] font-bold text-[#B19CD9]/60 uppercase tracking-widest py-1">{d}</div>
               ))}
+           </div>
+           <div className="grid grid-cols-7 gap-2">
+              {(() => {
+                const year = data?.year || new Date().getFullYear();
+                const firstDay = new Date(year, selectedMonth, 1).getDay();
+                const daysInMonth = new Date(year, selectedMonth + 1, 0).getDate();
+                const today = new Date().toISOString().split('T')[0];
+                const cells = [];
+                // Empty cells before first day
+                for (let i = 0; i < firstDay; i++) {
+                  cells.push(<div key={`empty-${i}`} className="aspect-square" />);
+                }
+                // Actual days
+                for (let day = 1; day <= daysInMonth; day++) {
+                  const dateStr = `${year}-${String(selectedMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                  const isToday = dateStr === today;
+                  const hasData = !!data.dailyMetrics[dateStr];
+                  cells.push(
+                    <div
+                      key={day}
+                      onClick={() => {
+                        setSelectedDate(dateStr);
+                        setViewMode('daily');
+                      }}
+                      className={`aspect-square border rounded-xl flex flex-col p-2 hover:bg-[#E6D5F0]/40 transition-all cursor-pointer group ${
+                        isToday ? 'border-[#B19CD9] bg-[#E6D5F0]/30 shadow-sm' : 'border-[#F8F7FC]'
+                      }`}
+                    >
+                      <span className={`text-[10px] font-bold group-hover:text-[#7B68A6] ${isToday ? 'text-[#7B68A6]' : 'text-gray-400'}`}>{day}</span>
+                      {hasData && <div className="mt-auto mx-auto w-1.5 h-1.5 rounded-full bg-[#B19CD9]" />}
+                    </div>
+                  );
+                }
+                return cells;
+              })()}
            </div>
         </div>
       </div>
