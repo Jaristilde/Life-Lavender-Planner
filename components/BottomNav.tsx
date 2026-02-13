@@ -5,7 +5,7 @@ import {
   Wallet, 
   Heart, 
   Menu,
-  Sunrise
+  ClipboardList
 } from 'lucide-react';
 
 interface BottomNavProps {
@@ -17,8 +17,8 @@ interface BottomNavProps {
 const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick }) => {
   const tabs = [
     { id: 'dashboard', label: 'Home', icon: Home },
+    { id: 'planner', label: 'Planner', icon: ClipboardList },
     { id: 'financial', label: 'Finance', icon: Wallet },
-    { id: 'morningReset', label: 'Morning', icon: Sunrise },
     { id: 'wellness', label: 'Wellness', icon: Heart },
     { id: 'more', label: 'More', icon: Menu },
   ];
