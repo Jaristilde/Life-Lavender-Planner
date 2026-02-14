@@ -477,9 +477,42 @@ const App: React.FC = () => {
         return <Profile
           profile={profile}
           user={user}
+          allYears={allYears}
+          activeYearData={activeYearData}
           onUpdateProfile={async (updates) => {
             await dataService.updateProfile(user.id, updates);
             setProfile({ ...profile, ...updates });
+          }}
+          onImportData={async (importedData: any) => {
+            if (!importedData?.years || !Array.isArray(importedData.years)) return;
+            for (const yearEntry of importedData.years) {
+              const yearNum = yearEntry.year;
+              if (!yearNum) continue;
+              let dbYear = await dataService.getYearData(user.id, yearNum);
+              if (!dbYear) {
+                dbYear = await dataService.createYear(user.id, yearNum, yearEntry.data || INITIAL_YEAR_DATA(yearNum));
+              } else {
+                const fields: Record<string, string> = {
+                  financial: 'financial_data', wellness: 'wellness_data', workbook: 'workbook_data',
+                  monthlyResets: 'monthly_resets', visionBoard: 'vision_board',
+                  simplifyChallenge: 'simplify_challenge', reflections: 'reflections',
+                  plannerFocus: 'planner', library: 'library', dailyMetrics: 'daily_todos'
+                };
+                for (const [key, dbField] of Object.entries(fields)) {
+                  if (yearEntry.data?.[key]) {
+                    await dataService.updateYearField(dbYear.id, dbField, yearEntry.data[key]);
+                  }
+                }
+              }
+            }
+            if (importedData.profile) {
+              await dataService.updateProfile(user.id, importedData.profile);
+              setProfile({ ...profile, ...importedData.profile });
+            }
+            const years = await dataService.getAllYears(user.id);
+            setAllYears(years || []);
+            loadingData.current = false;
+            await loadUserData(user.id, true);
           }}
         />;
       case 'database':

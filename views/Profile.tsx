@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
-import { User, Mail, DollarSign, FileText, Bell, Save, CheckCircle2, Loader2, Shield } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { User, Mail, DollarSign, Bell, Save, CheckCircle2, Loader2, Shield, Download, Upload, FileText, Printer } from 'lucide-react';
 import ButterflyIcon from '../components/ButterflyIcon';
 
 interface ProfileProps {
   profile: any;
   user: any;
+  allYears: any[];
+  activeYearData: any;
   onUpdateProfile: (updates: any) => Promise<void>;
+  onImportData: (data: any) => Promise<void>;
 }
 
-const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => {
+const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearData, onUpdateProfile, onImportData }) => {
   const [name, setName] = useState(profile?.name || '');
   const [bio, setBio] = useState(profile?.bio || '');
   const [currency, setCurrency] = useState(profile?.currency || 'USD');
@@ -18,6 +21,9 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => 
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
+  const [importMessage, setImportMessage] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isPremium = profile?.is_premium;
   const avatarUrl = user?.user_metadata?.avatar_url || profile?.avatar_url || null;
@@ -39,6 +45,94 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => 
       console.error('Failed to save profile:', err);
     }
     setSaving(false);
+  };
+
+  const handleExportJSON = () => {
+    const exportData = {
+      _meta: {
+        app: 'Lavender Life Planner',
+        version: '1.0.0',
+        exportDate: new Date().toISOString(),
+        exportedBy: email,
+      },
+      profile: {
+        name: profile?.name,
+        bio: profile?.bio,
+        currency: profile?.currency,
+        financial_goal_summary: profile?.financial_goal_summary,
+        notification_preferences: profile?.notification_preferences,
+        is_premium: profile?.is_premium,
+      },
+      years: allYears.map(y => ({
+        year: y.year,
+        data: {
+          financial: y.financial_data,
+          wellness: y.wellness_data,
+          workbook: y.workbook_data,
+          monthlyResets: y.monthly_resets,
+          visionBoard: y.vision_board,
+          simplifyChallenge: y.simplify_challenge,
+          reflections: y.reflections,
+          plannerFocus: y.planner,
+          library: y.library,
+          dailyMetrics: y.daily_todos,
+        }
+      })),
+      activeYearSnapshot: activeYearData ? {
+        year: activeYearData.year,
+        financial: activeYearData.financial,
+        wellness: activeYearData.wellness,
+        visionBoard: activeYearData.visionBoard,
+        dailyMetrics: activeYearData.dailyMetrics,
+        plannerFocus: activeYearData.plannerFocus,
+        reflections: activeYearData.reflections,
+      } : null,
+    };
+
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lavender-planner-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportPDF = () => {
+    window.print();
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setImportStatus('importing');
+    setImportMessage('');
+
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      if (!data._meta?.app || data._meta.app !== 'Lavender Life Planner') {
+        setImportStatus('error');
+        setImportMessage('This file does not appear to be a Lavender Life Planner export.');
+        return;
+      }
+
+      await onImportData(data);
+      setImportStatus('success');
+      setImportMessage(`Imported successfully! (exported ${new Date(data._meta.exportDate).toLocaleDateString()})`);
+      setTimeout(() => setImportStatus('idle'), 4000);
+    } catch (err: any) {
+      console.error('Import failed:', err);
+      setImportStatus('error');
+      setImportMessage(err?.message || 'Failed to parse file. Make sure it is a valid JSON export.');
+    }
+
+    // Reset file input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const currencies = [
@@ -190,6 +284,85 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, onUpdateProfile }) => 
               </button>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Data Export / Import */}
+      <div className="paper-card p-8 space-y-6">
+        <h3 className="text-lg font-bold text-[#7B68A6] flex items-center gap-2">
+          <FileText size={20} /> Export & Import Data
+        </h3>
+        <p className="text-sm text-gray-500 italic">
+          Your data belongs to you. Export regularly to keep a personal backup.
+        </p>
+
+        {/* Export Buttons */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Export</p>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={handleExportJSON}
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
+            >
+              <Download size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-700">Download as JSON</p>
+                <p className="text-[10px] text-gray-400">Full data backup — can be re-imported</p>
+              </div>
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
+            >
+              <Printer size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
+              <div className="text-left">
+                <p className="text-sm font-bold text-gray-700">Download as PDF</p>
+                <p className="text-[10px] text-gray-400">Print-friendly summary view</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* Import */}
+        <div className="space-y-3">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Import</p>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={importStatus === 'importing'}
+            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-dashed border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#F8F7FC] transition-all disabled:opacity-50"
+          >
+            {importStatus === 'importing' ? (
+              <Loader2 size={20} className="text-[#B19CD9] animate-spin" />
+            ) : (
+              <Upload size={20} className="text-[#B19CD9]" />
+            )}
+            <div className="text-left">
+              <p className="text-sm font-bold text-gray-700">
+                {importStatus === 'importing' ? 'Importing...' : 'Import from JSON'}
+              </p>
+              <p className="text-[10px] text-gray-400">Upload a previously exported .json file to restore your data</p>
+            </div>
+          </button>
+
+          {importStatus === 'success' && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+              <CheckCircle2 size={16} className="text-green-500" />
+              <p className="text-sm text-green-700">{importMessage}</p>
+            </div>
+          )}
+          {importStatus === 'error' && (
+            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
+              <FileText size={16} className="text-red-400" />
+              <p className="text-sm text-red-600">{importMessage}</p>
+            </div>
+          )}
         </div>
       </div>
 
