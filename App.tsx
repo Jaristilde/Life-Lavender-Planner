@@ -42,6 +42,7 @@ const App: React.FC = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [showWelcomeIntention, setShowWelcomeIntention] = useState(false);
 
   const saveTimeout = useRef<any>(null);
   const loadingData = useRef(false);
@@ -84,6 +85,9 @@ const App: React.FC = () => {
 
     console.log('[Auth] Setting up onAuthStateChange listener');
 
+    // Track whether initial data load has completed to prevent duplicate loads
+    let dataLoaded = false;
+
     // Single auth source: onAuthStateChange fires INITIAL_SESSION on setup
     const subscription = authService.onAuthStateChange(async (event, session) => {
       if (!mounted) return;
@@ -94,9 +98,15 @@ const App: React.FC = () => {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
             setUser(session.user);
-            // Do NOT clear hardTimeout here — let it remain as a safety net
+            // Skip duplicate load if data already loaded for this session
+            if (dataLoaded && event !== 'TOKEN_REFRESHED') {
+              console.log('[Auth] Data already loaded, skipping duplicate load for', event);
+              clearTimeout(hardTimeout);
+              return;
+            }
             await loadUserData(session.user.id, mounted);
-            clearTimeout(hardTimeout); // Only clear after data loads successfully
+            dataLoaded = true;
+            clearTimeout(hardTimeout);
           } else if (event === 'INITIAL_SESSION') {
             // No session on initial load — show auth screen
             console.log('[Auth] No session found, showing auth screen');
@@ -366,9 +376,16 @@ const App: React.FC = () => {
             trial_start_date: data.trialStartDate,
             onboarding_completed: true
           };
-          const updatedProfile = await dataService.upsertProfile(user.id, updates);
-          setProfile(updatedProfile || { ...profile, ...updates, id: user.id });
-          // Now load year data (profile exists, FK constraint satisfied)
+          try {
+            const updatedProfile = await dataService.upsertProfile(user.id, updates);
+            setProfile(updatedProfile || { ...updates, id: user.id });
+          } catch (err) {
+            console.error('[Onboarding] Profile save failed, continuing:', err);
+            setProfile({ ...updates, id: user.id });
+          }
+          // Show welcome/intention screen after onboarding
+          setShowWelcomeIntention(true);
+          // Load year data (profile exists now, FK constraint satisfied)
           loadingData.current = false;
           await loadUserData(user.id, true);
         }}
@@ -376,19 +393,28 @@ const App: React.FC = () => {
     );
   }
 
-  // First-time user: show welcome + intention screen (no blur, lightweight)
-  if (profile && profile.onboarding_completed && !profile.season_intention) {
+  // Show welcome + intention screen only right after onboarding completes
+  if (showWelcomeIntention) {
     return (
       <WelcomeIntention
         userName={profile.name || 'Friend'}
         onSave={async (intention) => {
-          const updates = { season_intention: intention || 'Clarity' };
-          await dataService.updateProfile(user.id, updates);
-          setProfile({ ...profile, ...updates });
-          // Load year data if not loaded yet
-          if (!activeYearData) {
-            loadingData.current = false;
-            await loadUserData(user.id, true);
+          // Always navigate to dashboard, even if save fails
+          setShowWelcomeIntention(false);
+          // Try to save intention to daily metrics (not profile — column doesn't exist)
+          if (intention && activeYearData) {
+            try {
+              const today = new Date().toISOString().split('T')[0];
+              const currentMetrics = activeYearData.dailyMetrics || {};
+              const todayMetrics = currentMetrics[today] || {};
+              const updatedMetrics = {
+                ...currentMetrics,
+                [today]: { ...todayMetrics, daily_intention: intention, date: today }
+              };
+              updateYearField('daily_todos', updatedMetrics);
+            } catch (err) {
+              console.error('[Welcome] Intention save failed:', err);
+            }
           }
         }}
       />
