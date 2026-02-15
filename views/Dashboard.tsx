@@ -24,7 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   const [chartReady, setChartReady] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
-  const todayMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
+  const todayMetrics = { ...DEFAULT_DAILY_METRICS(today), ...(data?.dailyMetrics?.[today] || {}) };
 
   useEffect(() => {
     const hour = new Date().getHours();

@@ -145,7 +145,11 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   };
 
   const getDayMetrics = (date: string): UserDailyMetrics => {
-    return data.dailyMetrics[date] || DEFAULT_DAILY_METRICS(date);
+    const defaults = DEFAULT_DAILY_METRICS(date);
+    const stored = data?.dailyMetrics?.[date];
+    if (!stored) return defaults;
+    // Merge stored data with defaults so partial records don't crash on missing fields
+    return { ...defaults, ...stored };
   };
 
   const updateDailyMetrics = (date: string, updates: Partial<UserDailyMetrics>) => {

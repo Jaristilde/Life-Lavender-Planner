@@ -458,10 +458,11 @@ const App: React.FC = () => {
             try {
               const today = new Date().toISOString().split('T')[0];
               const currentMetrics = activeYearData.dailyMetrics || {};
-              const todayMetrics = currentMetrics[today] || {};
+              // Merge with DEFAULT_DAILY_METRICS so stored record has ALL fields
+              const todayMetrics = { ...DEFAULT_DAILY_METRICS(today), ...(currentMetrics[today] || {}) };
               const updatedMetrics = {
                 ...currentMetrics,
-                [today]: { ...todayMetrics, daily_intention: intention, date: today }
+                [today]: { ...todayMetrics, daily_intention: intention }
               };
               updateYearField('daily_todos', updatedMetrics);
             } catch (err) {

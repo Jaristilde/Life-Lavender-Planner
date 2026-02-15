@@ -28,7 +28,7 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
     return () => cancelAnimationFrame(raf);
   }, []);
   const today = new Date().toISOString().split('T')[0];
-  const rawMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
+  const rawMetrics = { ...DEFAULT_DAILY_METRICS(today), ...(data?.dailyMetrics?.[today] || {}) };
   // Clean up any obvious test data patterns (e.g. "TestTestTest...")
   const cleanIntention = (() => {
     const val = rawMetrics?.daily_intention || '';

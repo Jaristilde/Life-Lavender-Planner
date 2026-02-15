@@ -46,7 +46,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
     }
   }, [today]);
 
-  const metrics: UserDailyMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
+  const metrics: UserDailyMetrics = { ...DEFAULT_DAILY_METRICS(today), ...(data?.dailyMetrics?.[today] || {}) };
 
   const updateMetrics = (updates: Partial<UserDailyMetrics>) => {
     updateData({
