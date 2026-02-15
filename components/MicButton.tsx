@@ -1,25 +1,70 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Mic } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
+import { SpeechRecognition } from '@capacitor-community/speech-recognition';
 
 interface MicButtonProps {
   onTranscript: (text: string) => void;
   className?: string;
 }
 
+const isNative = Capacitor.isNativePlatform();
+
 const MicButton: React.FC<MicButtonProps> = ({ onTranscript, className = '' }) => {
   const [listening, setListening] = useState(false);
+  const [available, setAvailable] = useState<boolean | null>(null);
   const recognitionRef = useRef<any>(null);
 
-  const toggle = () => {
+  // Check availability on mount
+  useEffect(() => {
+    if (isNative) {
+      SpeechRecognition.available().then(({ available: a }) => setAvailable(a)).catch(() => setAvailable(false));
+    } else {
+      const hasBrowser = !!(window as any).webkitSpeechRecognition || !!(window as any).SpeechRecognition;
+      setAvailable(hasBrowser);
+    }
+  }, []);
+
+  const toggleNative = async () => {
+    if (listening) {
+      await SpeechRecognition.stop();
+      setListening(false);
+      return;
+    }
+
+    // Request permissions
+    const perms = await SpeechRecognition.requestPermissions();
+    if (perms.speechRecognition !== 'granted') return;
+
+    setListening(true);
+
+    try {
+      const result = await SpeechRecognition.start({
+        language: 'en-US',
+        maxResults: 3,
+        partialResults: false,
+      });
+
+      if (result.matches && result.matches.length > 0) {
+        onTranscript(result.matches[0]);
+      }
+    } catch (err) {
+      console.warn('[MicButton] Native speech error:', err);
+    } finally {
+      setListening(false);
+    }
+  };
+
+  const toggleWeb = () => {
     if (listening) {
       recognitionRef.current?.stop();
       return;
     }
 
-    const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-    if (!SpeechRecognition) return;
+    const WebSpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!WebSpeechRecognition) return;
 
-    const recognition = new SpeechRecognition();
+    const recognition = new WebSpeechRecognition();
     recognition.continuous = false;
     recognition.interimResults = true;
     recognition.lang = 'en-US';
@@ -42,14 +87,15 @@ const MicButton: React.FC<MicButtonProps> = ({ onTranscript, className = '' }) =
     recognition.start();
   };
 
-  if (!(window as any).webkitSpeechRecognition && !(window as any).SpeechRecognition) {
-    return null;
-  }
+  // Hide button if speech not available
+  if (available === false) return null;
+  // Still checking — show button but it won't do anything harmful
+  if (available === null) return null;
 
   return (
     <button
       type="button"
-      onClick={toggle}
+      onClick={isNative ? toggleNative : toggleWeb}
       className={`flex-none p-2 rounded-full transition-all ${
         listening
           ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/40'
