@@ -248,7 +248,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ userId, userName }) => {
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar bg-[#F8F7FC]">
-            {messages.map(msg => (
+            {messages.filter(Boolean).map(msg => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                 {msg.role === 'assistant' && <ButterflyAvatar />}
                 <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed ${
@@ -256,7 +256,7 @@ const Chatbot: React.FC<ChatbotProps> = ({ userId, userName }) => {
                     ? 'bg-[#B19CD9] text-white rounded-br-md'
                     : 'bg-white text-gray-700 border border-[#E6D5F0] rounded-bl-md shadow-sm'
                 }`}>
-                  {msg.content.split('\n').map((line, i) => (
+                  {(msg.content || '').split('\n').map((line, i) => (
                     <p key={i} className={i > 0 ? 'mt-2' : ''}>
                       {line.split('**').map((part, j) =>
                         j % 2 === 1 ? <strong key={j}>{part}</strong> : <span key={j}>{part}</span>

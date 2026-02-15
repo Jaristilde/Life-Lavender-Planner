@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { YearData, UserDailyMetrics } from '../types';
 import { 
   Sparkles, 
@@ -22,6 +22,11 @@ interface TrackingCenterProps {
 }
 
 const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => {
+  const [chartReady, setChartReady] = useState(false);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setChartReady(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
   const today = new Date().toISOString().split('T')[0];
   const rawMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
   // Clean up any obvious test data patterns (e.g. "TestTestTest...")
@@ -125,26 +130,30 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
             </div>
           </div>
 
-          <div className="h-64 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={last7Days}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#999' }} />
-                <YAxis hide domain={[0, 10]} />
-                <Tooltip 
-                  contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  labelStyle={{ fontWeight: 'bold', color: '#7B68A6' }}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="level" 
-                  stroke="#B19CD9" 
-                  strokeWidth={4} 
-                  dot={{ fill: '#B19CD9', strokeWidth: 2, r: 4 }}
-                  activeDot={{ r: 6, strokeWidth: 0 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+          <div style={{ width: '100%', height: 256, minHeight: 200, position: 'relative' }}>
+            {chartReady ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <LineChart data={last7Days}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                  <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#999' }} />
+                  <YAxis hide domain={[0, 10]} />
+                  <Tooltip
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    labelStyle={{ fontWeight: 'bold', color: '#7B68A6' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="level"
+                    stroke="#B19CD9"
+                    strokeWidth={4}
+                    dot={{ fill: '#B19CD9', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, strokeWidth: 0 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex items-center justify-center h-full text-gray-400 text-sm">Loading chart...</div>
+            )}
           </div>
 
           <div className="mt-6">

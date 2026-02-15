@@ -21,6 +21,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   const [personalAffirmations, setPersonalAffirmations] = useState<string[]>([]);
   const [greeting, setGreeting] = useState('');
   const [gratitudeDismissed, setGratitudeDismissed] = useState(false);
+  const [chartReady, setChartReady] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const todayMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
@@ -30,6 +31,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
     if (hour < 12) setGreeting('Good morning');
     else if (hour < 18) setGreeting('Good afternoon');
     else setGreeting('Good evening');
+    // Defer chart rendering until container is laid out to prevent Recharts -1 dimension crash
+    const raf = requestAnimationFrame(() => setChartReady(true));
+    return () => cancelAnimationFrame(raf);
   }, []);
 
   useEffect(() => {
@@ -111,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
       </header>
 
       {/* Daily Gratitude Prompt — shows when today's gratitude is empty */}
-      {!gratitudeDismissed && !(todayMetrics.gratitude || []).some((g: string) => g.trim()) && (
+      {!gratitudeDismissed && !(todayMetrics.gratitude || []).some((g: string) => (g || '').trim()) && (
         <div className="paper-card p-5 border-l-4 border-[#B19CD9] bg-white">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
@@ -205,9 +209,9 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         <div className="lg:col-span-2 space-y-4 md:space-y-8">
           <div className="paper-card p-5 md:p-8">
             <h2 className="text-base md:text-xl font-bold mb-4">Yearly Financial Pulse</h2>
-            <div style={{ width: '100%', height: 280, minHeight: 200 }}>
-              {chartData && chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
+            <div style={{ width: '100%', height: 280, minHeight: 200, position: 'relative' }}>
+              {chartReady ? (
+                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                   <BarChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
                     <XAxis dataKey="name" />
@@ -215,13 +219,13 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
                     <Tooltip />
                     <Bar dataKey="value" radius={[8, 8, 0, 0]}>
                       {chartData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={['#B19CD9', '#E6D5F0', '#7B68A6'][index]} />
+                        <Cell key={`cell-${index}`} fill={['#B19CD9', '#E6D5F0', '#7B68A6'][index % 3]} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-gray-400 text-sm">No financial data yet</div>
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">Loading chart...</div>
               )}
             </div>
           </div>
