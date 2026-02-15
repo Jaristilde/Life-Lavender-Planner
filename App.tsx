@@ -43,6 +43,7 @@ const App: React.FC = () => {
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showWelcomeIntention, setShowWelcomeIntention] = useState(false);
+  const [onboardingAttempted, setOnboardingAttempted] = useState(false);
 
   const saveTimeout = useRef<any>(null);
   const loadingData = useRef(false);
@@ -159,13 +160,16 @@ const App: React.FC = () => {
       console.log('[Data] Fetching profile...');
       const userProfile = await dataService.getProfile(userId);
       if (!isMounted) return;
-      setProfile(userProfile);
-      console.log('[Data] Profile loaded:', userProfile?.name || 'new user');
+      console.log('[Data] Profile loaded:', userProfile?.name || 'new user', '| onboarding:', userProfile?.onboarding_completed);
 
-      // If no profile exists, skip year loading — user needs to complete onboarding first
-      // (years table has FK constraint requiring a profile row)
-      if (!userProfile) {
-        console.log('[Data] No profile found, skipping year load (onboarding required)');
+      // Don't overwrite local profile if onboarding was already completed in this session
+      if (!onboardingAttempted) {
+        setProfile(userProfile);
+      }
+
+      // If no profile or onboarding not completed, skip year loading — user needs onboarding first
+      if (!userProfile || !userProfile.onboarding_completed) {
+        console.log('[Data] Profile incomplete, skipping year load (onboarding required)');
         finishSplash();
         return;
       }
@@ -368,11 +372,12 @@ const App: React.FC = () => {
     );
   }
 
-  if (!profile || !profile.onboarding_completed) {
+  if (!onboardingAttempted && (!profile || !profile.onboarding_completed)) {
     return (
       <PremiumOnboarding
         onComplete={async (data) => {
-          const updates = {
+          const localProfile = {
+            id: user.id,
             name: data.userName,
             mood: data.userMood,
             feeling: data.userFeeling,
@@ -380,18 +385,61 @@ const App: React.FC = () => {
             trial_start_date: data.trialStartDate,
             onboarding_completed: true
           };
-          try {
-            const updatedProfile = await dataService.upsertProfile(user.id, updates);
-            setProfile(updatedProfile || { ...updates, id: user.id });
-          } catch (err) {
-            console.error('[Onboarding] Profile save failed, continuing:', err);
-            setProfile({ ...updates, id: user.id });
-          }
-          // Show welcome/intention screen after onboarding
+
+          // Mark onboarding attempted FIRST — prevents loop no matter what
+          setOnboardingAttempted(true);
+          setProfile(localProfile);
           setShowWelcomeIntention(true);
-          // Load year data (profile exists now, FK constraint satisfied)
-          loadingData.current = false;
-          await loadUserData(user.id, true);
+
+          // Try to persist to DB (non-blocking for the user)
+          try {
+            const saved = await dataService.upsertProfile(user.id, {
+              name: data.userName,
+              mood: data.userMood,
+              feeling: data.userFeeling,
+              is_premium: data.isPremium,
+              trial_start_date: data.trialStartDate,
+              onboarding_completed: true
+            });
+            if (saved) {
+              console.log('[Onboarding] Profile saved to DB');
+              setProfile(saved);
+            }
+          } catch (err) {
+            console.warn('[Onboarding] Profile save failed (will retry later):', err);
+          }
+
+          // Load year data WITHOUT re-fetching profile (avoids overwriting local state)
+          try {
+            const currentYear = new Date().getFullYear();
+            let dbYear = await dataService.getYearData(user.id, currentYear);
+            if (!dbYear) {
+              dbYear = await dataService.createYear(user.id, currentYear, INITIAL_YEAR_DATA(currentYear));
+            }
+            if (dbYear) {
+              const baseData = INITIAL_YEAR_DATA(currentYear);
+              setActiveYearId(dbYear.id);
+              setActiveYearData({
+                ...baseData,
+                ...dbYear,
+                financial: { ...baseData.financial, ...(dbYear?.financial_data || {}) },
+                wellness: { ...baseData.wellness, ...(dbYear?.wellness_data || {}) },
+                workbook: { ...baseData.workbook, ...(dbYear?.workbook_data || {}) },
+                monthlyResets: dbYear?.monthly_resets || {},
+                visionBoard: { ...baseData.visionBoard, ...(dbYear?.vision_board || {}) },
+                simplifyChallenge: (dbYear?.simplify_challenge?.length > 0) ? dbYear.simplify_challenge : baseData.simplifyChallenge,
+                reflections: { ...baseData.reflections, ...(dbYear?.reflections || {}) },
+                plannerFocus: { ...baseData.plannerFocus, ...(dbYear?.planner || {}) },
+                library: dbYear?.library || [],
+                dailyMetrics: dbYear?.daily_todos || {}
+              });
+            }
+          } catch (yearErr) {
+            console.warn('[Onboarding] Year data load failed (will use defaults):', yearErr);
+            // Use local defaults so dashboard still works
+            const currentYear = new Date().getFullYear();
+            setActiveYearData(INITIAL_YEAR_DATA(currentYear));
+          }
         }}
       />
     );

@@ -34,13 +34,34 @@ export const dataService = {
   },
 
   async upsertProfile(userId: string, updates: any) {
-    const { data, error } = await withTimeout(
-      supabase.from('profiles').upsert({ id: userId, ...updates }, { onConflict: 'id' }).select().maybeSingle(),
+    // Strategy: UPDATE first (profile row usually exists from auth trigger).
+    // Only INSERT if UPDATE affects 0 rows. Avoids 409 from RLS-blocked upsert.
+    console.log('[Data] upsertProfile: trying UPDATE first for', userId);
+    const { data: updated, error: updateErr } = await withTimeout(
+      supabase.from('profiles').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', userId).select().maybeSingle(),
       20000,
-      'upsertProfile'
+      'upsertProfile:update'
     );
-    if (error) throw error;
-    return data;
+    if (!updateErr && updated) {
+      console.log('[Data] upsertProfile: UPDATE succeeded');
+      return updated;
+    }
+    if (updateErr) {
+      console.warn('[Data] upsertProfile: UPDATE failed:', updateErr.message);
+    }
+
+    // UPDATE returned null (no row) — try INSERT
+    console.log('[Data] upsertProfile: no row to update, trying INSERT');
+    const { data: inserted, error: insertErr } = await withTimeout(
+      supabase.from('profiles').insert({ id: userId, ...updates }).select().maybeSingle(),
+      20000,
+      'upsertProfile:insert'
+    );
+    if (insertErr) {
+      console.warn('[Data] upsertProfile: INSERT failed:', insertErr.message);
+      throw insertErr;
+    }
+    return inserted;
   },
 
   // Year Data
