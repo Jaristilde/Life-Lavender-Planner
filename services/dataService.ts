@@ -15,18 +15,18 @@ export const dataService = {
   // Profile
   async getProfile(userId: string) {
     const { data, error } = await withTimeout(
-      supabase.from('profiles').select('*').eq('id', userId).single(),
-      10000,
+      supabase.from('profiles').select('*').eq('id', userId).maybeSingle(),
+      20000,
       'getProfile'
     );
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data; // null if no profile exists
   },
 
   async updateProfile(userId: string, updates: any) {
     const { data, error } = await withTimeout(
-      supabase.from('profiles').update(updates).eq('id', userId).select().single(),
-      10000,
+      supabase.from('profiles').update(updates).eq('id', userId).select().maybeSingle(),
+      20000,
       'updateProfile'
     );
     if (error) throw error;
@@ -35,8 +35,8 @@ export const dataService = {
 
   async upsertProfile(userId: string, updates: any) {
     const { data, error } = await withTimeout(
-      supabase.from('profiles').upsert({ id: userId, ...updates }, { onConflict: 'id' }).select().single(),
-      10000,
+      supabase.from('profiles').upsert({ id: userId, ...updates }, { onConflict: 'id' }).select().maybeSingle(),
+      20000,
       'upsertProfile'
     );
     if (error) throw error;
@@ -46,18 +46,18 @@ export const dataService = {
   // Year Data
   async getYearData(userId: string, year: number) {
     const { data, error } = await withTimeout(
-      supabase.from('years').select('*').eq('user_id', userId).eq('year', year).single(),
-      10000,
+      supabase.from('years').select('*').eq('user_id', userId).eq('year', year).maybeSingle(),
+      20000,
       'getYearData'
     );
-    if (error && error.code !== 'PGRST116') throw error;
-    return data;
+    if (error) throw error;
+    return data; // null if no year exists
   },
 
   async getAllYears(userId: string) {
     const { data, error } = await withTimeout(
       supabase.from('years').select('id, year, is_archived, created_at').eq('user_id', userId).order('year', { ascending: false }),
-      10000,
+      20000,
       'getAllYears'
     );
     if (error) throw error;
@@ -65,58 +65,55 @@ export const dataService = {
   },
 
   async createYear(userId: string, year: number, initialData: any) {
-    const { data, error } = await supabase
-      .from('years')
-      .insert({
-        user_id: userId,
-        year: year,
-        financial_data: initialData.financial || {},
-        wellness_data: initialData.wellness || {},
-        workbook_data: initialData.workbook || {},
-        monthly_resets: initialData.monthlyResets || {},
-        daily_morning_resets: initialData.dailyMorningResets || {},
-        goals: initialData.visionBoard?.goals || {},
-        affirmations: initialData.affirmations || [],
-        vision_board: initialData.visionBoard || {},
-        simplify_challenge: initialData.simplifyChallenge || {},
-        reflections: initialData.reflections || {},
-        planner: initialData.plannerFocus || {},
-        library: initialData.library || [],
-        daily_todos: initialData.wellness?.dailyToDos || []
-      })
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase
+        .from('years')
+        .insert({
+          user_id: userId,
+          year: year,
+          financial_data: initialData.financial || {},
+          wellness_data: initialData.wellness || {},
+          workbook_data: initialData.workbook || {},
+          monthly_resets: initialData.monthlyResets || {},
+          daily_morning_resets: initialData.dailyMorningResets || {},
+          goals: initialData.visionBoard?.goals || {},
+          affirmations: initialData.affirmations || [],
+          vision_board: initialData.visionBoard || {},
+          simplify_challenge: initialData.simplifyChallenge || {},
+          reflections: initialData.reflections || {},
+          planner: initialData.plannerFocus || {},
+          library: initialData.library || [],
+          daily_todos: initialData.wellness?.dailyToDos || []
+        })
+        .select()
+        .maybeSingle(),
+      20000,
+      'createYear'
+    );
     // Handle duplicate key (race condition: another call already created this year)
     if (error && error.code === '23505') {
-      const { data: existing, error: fetchErr } = await supabase
-        .from('years')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('year', year)
-        .single();
-      if (fetchErr) throw fetchErr;
-      return existing;
+      return this.getYearData(userId, year);
     }
     if (error) throw error;
     return data;
   },
 
   async updateYearField(yearId: string, field: string, value: any) {
-    const { data, error } = await supabase
-      .from('years')
-      .update({ [field]: value })
-      .eq('id', yearId)
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase.from('years').update({ [field]: value }).eq('id', yearId).select().maybeSingle(),
+      20000,
+      'updateYearField'
+    );
     if (error) throw error;
     return data;
   },
 
   async archiveYear(yearId: string) {
-    const { error } = await supabase
-      .from('years')
-      .update({ is_archived: true })
-      .eq('id', yearId);
+    const { error } = await withTimeout(
+      supabase.from('years').update({ is_archived: true }).eq('id', yearId),
+      20000,
+      'archiveYear'
+    );
     if (error) throw error;
   },
 
