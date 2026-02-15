@@ -148,6 +148,14 @@ const App: React.FC = () => {
       setProfile(userProfile);
       console.log('[Data] Profile loaded:', userProfile?.name || 'new user');
 
+      // If no profile exists, skip year loading — user needs to complete onboarding first
+      // (years table has FK constraint requiring a profile row)
+      if (!userProfile) {
+        console.log('[Data] No profile found, skipping year load (onboarding required)');
+        finishSplash();
+        return;
+      }
+
       console.log('[Data] Fetching years...');
       const years = await dataService.getAllYears(userId);
       if (!isMounted) return;
@@ -309,7 +317,7 @@ const App: React.FC = () => {
   }
   if (!user) return <AuthScreen />;
 
-  if (loadError || (!activeYearData && !loading)) {
+  if (loadError) {
     return (
       <div className="flex-1 bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6" style={{ minHeight: '100%' }}>
         <div className="bg-white p-8 rounded-[32px] shadow-2xl max-w-sm w-full text-center space-y-6">
@@ -346,7 +354,7 @@ const App: React.FC = () => {
     );
   }
 
-  if (profile && !profile.onboarding_completed) {
+  if (!profile || !profile.onboarding_completed) {
     return (
       <PremiumOnboarding
         onComplete={async (data) => {
@@ -358,8 +366,11 @@ const App: React.FC = () => {
             trial_start_date: data.trialStartDate,
             onboarding_completed: true
           };
-          await dataService.updateProfile(user.id, updates);
-          setProfile({ ...profile, ...updates });
+          const updatedProfile = await dataService.upsertProfile(user.id, updates);
+          setProfile(updatedProfile || { ...profile, ...updates, id: user.id });
+          // Now load year data (profile exists, FK constraint satisfied)
+          loadingData.current = false;
+          await loadUserData(user.id, true);
         }}
       />
     );
@@ -374,8 +385,25 @@ const App: React.FC = () => {
           const updates = { season_intention: intention || 'Clarity' };
           await dataService.updateProfile(user.id, updates);
           setProfile({ ...profile, ...updates });
+          // Load year data if not loaded yet
+          if (!activeYearData) {
+            loadingData.current = false;
+            await loadUserData(user.id, true);
+          }
         }}
       />
+    );
+  }
+
+  // If we have profile but no year data, show loading while it loads
+  if (!activeYearData) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#F8F7FC]" style={{ minHeight: '100%' }}>
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-3 border-[#B19CD9] border-t-transparent rounded-full mx-auto" style={{ animation: 'spin 0.8s linear infinite', borderWidth: '3px' }} />
+          <p className="text-xs text-[#7B68A6] font-medium">Loading your data...</p>
+        </div>
+      </div>
     );
   }
 

@@ -33,6 +33,16 @@ export const dataService = {
     return data;
   },
 
+  async upsertProfile(userId: string, updates: any) {
+    const { data, error } = await withTimeout(
+      supabase.from('profiles').upsert({ id: userId, ...updates }, { onConflict: 'id' }).select().single(),
+      10000,
+      'upsertProfile'
+    );
+    if (error) throw error;
+    return data;
+  },
+
   // Year Data
   async getYearData(userId: string, year: number) {
     const { data, error } = await withTimeout(
