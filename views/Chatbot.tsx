@@ -130,7 +130,15 @@ const Chatbot: React.FC<ChatbotProps> = ({ userId, userName }) => {
             content: m.content,
             timestamp: new Date(m.created_at),
           }));
-          setMessages(prev => [prev[0], ...historyMessages]);
+          setMessages(prev => {
+            const welcome = prev[0] || {
+              id: 'welcome',
+              role: 'assistant' as const,
+              content: `Hi ${userName}! I'm Lavender, your financial wellness assistant.`,
+              timestamp: new Date(),
+            };
+            return [welcome, ...historyMessages];
+          });
         }
       } catch {
         // chat_messages table may not exist yet

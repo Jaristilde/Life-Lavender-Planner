@@ -116,7 +116,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
   };
 
   const weeklyFinancialPriority = (data?.financial?.weeklyPriorities?.length ?? 0) > 0
-    ? data.financial.weeklyPriorities[0].text
+    ? data?.financial?.weeklyPriorities?.[0]?.text || "Stay mindful of your spending today."
     : "Stay mindful of your spending today.";
 
   const sectionTitles = ['Intention', 'Mood', 'Money', 'Priorities', 'Complete'];

@@ -41,16 +41,16 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   }, [userName, mood, feeling]);
 
   // Safe Accessor Patterns with Fallbacks
-  const financial = data?.financial ?? { income: 0, fixedExpenses: [], variableExpenses: [], savingsGoals: [] };
+  const financial = data?.financial || { income: 0, fixedExpenses: [], variableExpenses: [], savingsGoals: [] };
   const income = financial?.income ?? 0;
-  const fixedExpenses = financial?.fixedExpenses ?? [];
-  const variableExpenses = financial?.variableExpenses ?? [];
-  const savingsGoals = financial?.savingsGoals ?? [];
+  const fixedExpenses = Array.isArray(financial?.fixedExpenses) ? financial.fixedExpenses : [];
+  const variableExpenses = Array.isArray(financial?.variableExpenses) ? financial.variableExpenses : [];
+  const savingsGoals = Array.isArray(financial?.savingsGoals) ? financial.savingsGoals : [];
 
-  const challenge = data?.simplifyChallenge ?? [];
-  const blueprint = data?.blueprint ?? { topIntentions: [], morningRitual: [] };
-  const workbook = data?.workbook ?? { current_page: 0 };
-  const monthlyResets = data?.monthlyResets ?? {};
+  const challenge = Array.isArray(data?.simplifyChallenge) ? data.simplifyChallenge : [];
+  const blueprint = data?.blueprint || { topIntentions: [], morningRitual: [] };
+  const workbook = data?.workbook || { current_page: 0 };
+  const monthlyResets = data?.monthlyResets || {};
 
   const financialSummary = {
     income: income,
@@ -75,8 +75,8 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
 
   // Today's priorities completion
   const priorities = todayMetrics.top_priorities || [];
-  const completedPriorities = priorities.filter(p => p.completed).length;
-  const totalPriorities = priorities.filter(p => p.text.trim()).length;
+  const completedPriorities = priorities.filter(p => p?.completed).length;
+  const totalPriorities = priorities.filter(p => (p?.text || '').trim()).length;
 
   const getMoodColor = (score: number) => {
     if (score <= 2) return '#EF4444';
@@ -205,20 +205,24 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         <div className="lg:col-span-2 space-y-4 md:space-y-8">
           <div className="paper-card p-5 md:p-8">
             <h2 className="text-base md:text-xl font-bold mb-4">Yearly Financial Pulse</h2>
-            <div className="h-56 md:h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={['#B19CD9', '#E6D5F0', '#7B68A6'][index]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div style={{ width: '100%', height: 280, minHeight: 200 }}>
+              {chartData && chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                      {chartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={['#B19CD9', '#E6D5F0', '#7B68A6'][index]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-gray-400 text-sm">No financial data yet</div>
+              )}
             </div>
           </div>
 

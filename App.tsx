@@ -167,9 +167,9 @@ const App: React.FC = () => {
         setProfile(userProfile);
       }
 
-      // If no profile or onboarding not completed, skip year loading — user needs onboarding first
-      if (!userProfile || !userProfile.onboarding_completed) {
-        console.log('[Data] Profile incomplete, skipping year load (onboarding required)');
+      // If no profile at all, or onboarding not yet completed, skip year loading — onboarding will handle it
+      if (!userProfile?.onboarding_completed) {
+        console.log('[Data] New user — awaiting onboarding before loading year data');
         finishSplash();
         return;
       }
