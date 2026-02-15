@@ -2,13 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-/* BUG 1 — Prevent iOS auto-zoom on input focus (requires >= 16px) */
+/* iOS FIX 1 — Prevent iOS auto-zoom on input focus (requires >= 16px) */
 input, textarea, select {
   font-size: 16px !important;
 }
 
-/* BUG 3 — Minimum 44px tap targets for icon buttons */
+/* iOS FIX 2 — Fixed header/footer stability during iOS elastic scroll */
+@supports (-webkit-touch-callout: none) {
+  /* Prevent overscroll bounce on the body */
+  html, body {
+    overscroll-behavior-y: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hardware-accelerate fixed elements so they don't jitter */
+  .fixed {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* Sticky headers: ensure iOS respects them */
+  .sticky {
+    position: -webkit-sticky;
+    position: sticky;
+  }
+}
+
+/* iOS FIX 3 — Minimum 44px tap targets for icon/emoji buttons */
 button:has(svg) {
   min-width: 44px;
   min-height: 44px;
+}
+
+/* Fallback: ensure all interactive touch targets meet iOS HIG 44px minimum */
+@supports (-webkit-touch-callout: none) {
+  button, [role="button"] {
+    min-height: 44px;
+  }
+  /* Prevent text selection flash on tap */
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
 }
