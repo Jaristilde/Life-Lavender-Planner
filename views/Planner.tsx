@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { YearData, GoogleSyncSettings, PlannerFocus, UserDailyMetrics, KanbanItem } from '../types';
 import {
   ChevronLeft,
@@ -15,6 +16,8 @@ import {
 } from 'lucide-react';
 import MicButton from '../components/MicButton';
 import { DEFAULT_DAILY_METRICS } from '../constants';
+
+const isNative = Capacitor.isNativePlatform();
 
 interface PlannerProps {
   data: YearData;
@@ -487,9 +490,11 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               return (
                 <div
                   key={colKey}
-                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); }}
-                  onDragLeave={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); }}
-                  onDrop={(e) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }}
+                  {...(!isNative ? {
+                    onDragOver: (e: React.DragEvent) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); },
+                    onDragLeave: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); },
+                    onDrop: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }
+                  } : {})}
                   className={`flex flex-col ${colors.bg} rounded-2xl border ${colors.border} overflow-hidden min-h-[320px] transition-all`}
                 >
                   {/* Column Header */}
@@ -499,7 +504,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                     </span>
                     <button
                       onClick={() => handleKanbanAdd(colKey)}
-                      className="w-7 h-7 flex items-center justify-center bg-white/60 hover:bg-white text-[#7B68A6] rounded-full transition-all hover:shadow-md hover:scale-110"
+                      className="w-8 h-8 flex items-center justify-center bg-white/60 hover:bg-white text-[#7B68A6] rounded-full transition-all hover:shadow-md hover:scale-110"
                       title="Add sticky note"
                     >
                       <Plus size={16} strokeWidth={2.5} />
@@ -508,15 +513,14 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
 
                   {/* Sticky Notes */}
                   <div className="flex-1 p-3 space-y-3 custom-scrollbar overflow-y-auto">
-                    {(metrics.kanban[colKey] || []).map(item => (
+                    {(metrics.kanban?.[colKey] || []).map(item => (
                       <div
                         key={item.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item.id, colKey)}
-                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]`}
+                        {...(!isNative ? { draggable: true, onDragStart: (e: React.DragEvent) => handleDragStart(e, item.id, colKey) } : {})}
+                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all ${!isNative ? 'cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]' : ''}`}
                       >
                         <div className="flex items-start gap-2">
-                          <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />
+                          {!isNative && <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />}
                           <textarea
                             className="flex-1 bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
                             placeholder="Write here..."
@@ -524,22 +528,23 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                             rows={Math.max(2, Math.ceil((item.text.length || 1) / 25))}
                             onChange={(e) => handleKanbanEdit(colKey, item.id, e.target.value)}
                             onMouseDown={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <div className="mt-2 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className={`mt-2 flex justify-end ${isNative ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
                           <button
                             onClick={() => handleKanbanRemove(colKey, item.id)}
-                            className="p-1 rounded-full hover:bg-red-100 transition-colors"
+                            className="p-2 rounded-full hover:bg-red-100 transition-colors"
                           >
-                            <Trash2 size={12} className="text-red-300 hover:text-red-500" />
+                            <Trash2 size={14} className="text-red-300 hover:text-red-500" />
                           </button>
                         </div>
                       </div>
                     ))}
-                    {(!metrics.kanban[colKey] || metrics.kanban[colKey].length === 0) && (
+                    {(!metrics.kanban?.[colKey] || metrics.kanban[colKey].length === 0) && (
                       <button
                         onClick={() => handleKanbanAdd(colKey)}
-                        className="w-full flex flex-col items-center justify-center py-10 opacity-40 hover:opacity-70 transition-opacity cursor-pointer"
+                        className="w-full flex flex-col items-center justify-center py-10 opacity-60 hover:opacity-80 transition-opacity cursor-pointer"
                       >
                         <Plus size={24} className="text-[#B19CD9] mb-2" />
                         <span className="italic text-xs text-[#7B68A6]">Add a sticky note</span>
