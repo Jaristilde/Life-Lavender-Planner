@@ -12,7 +12,8 @@ import {
   Plus,
   GripVertical,
   Trash2,
-  RefreshCw
+  RefreshCw,
+  ArrowRight
 } from 'lucide-react';
 import MicButton from '../components/MicButton';
 import { DEFAULT_DAILY_METRICS } from '../constants';
@@ -131,6 +132,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedWeekStart, setSelectedWeekStart] = useState(() => getMonday(new Date()).toISOString().split('T')[0]);
   const [showSyncModal, setShowSyncModal] = useState(false);
+  const [moveMenuOpen, setMoveMenuOpen] = useState<string | null>(null);
 
   const months = [
     'January', 'February', 'March', 'April', 'May', 'June',
@@ -213,6 +215,21 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
           ...metrics.kanban,
           [sourceCol]: newSourceList,
           [targetCol]: newTargetList
+        }
+      });
+    };
+
+    // Touch-friendly move for iOS (replaces drag-and-drop)
+    const kanbanColumns: Array<keyof UserDailyMetrics['kanban']> = ['todo', 'inProgress', 'done', 'notes'];
+    const handleKanbanMove = (sourceCol: keyof UserDailyMetrics['kanban'], itemId: string, targetCol: keyof UserDailyMetrics['kanban']) => {
+      if (sourceCol === targetCol) return;
+      const item = (metrics.kanban[sourceCol] || []).find(i => i.id === itemId);
+      if (!item) return;
+      updateDailyMetrics(selectedDate, {
+        kanban: {
+          ...metrics.kanban,
+          [sourceCol]: (metrics.kanban[sourceCol] || []).filter(i => i.id !== itemId),
+          [targetCol]: [...(metrics.kanban[targetCol] || []), item]
         }
       });
     };
@@ -531,7 +548,34 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                             onTouchStart={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <div className={`mt-2 flex justify-end ${isNative ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                        <div className={`mt-2 flex items-center ${isNative ? 'justify-between' : 'justify-end opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                          {/* Move-to buttons for iOS (replaces drag-and-drop) */}
+                          {isNative && (
+                            <div className="relative">
+                              <button
+                                onClick={() => setMoveMenuOpen(moveMenuOpen === item.id ? null : item.id)}
+                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[#7B68A6] bg-white/60 hover:bg-white transition-colors"
+                              >
+                                <ArrowRight size={12} /> Move
+                              </button>
+                              {moveMenuOpen === item.id && (
+                                <div className="absolute left-0 bottom-full mb-1 bg-white rounded-xl shadow-lg border border-[#E6D5F0] p-1.5 z-20 min-w-[130px]">
+                                  {kanbanColumns.filter(c => c !== colKey).map(targetCol => (
+                                    <button
+                                      key={targetCol}
+                                      onClick={() => {
+                                        handleKanbanMove(colKey, item.id, targetCol);
+                                        setMoveMenuOpen(null);
+                                      }}
+                                      className="w-full text-left px-3 py-2 text-xs font-bold text-[#7B68A6] hover:bg-[#F8F7FC] rounded-lg transition-colors"
+                                    >
+                                      {colLabels[targetCol]}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
                           <button
                             onClick={() => handleKanbanRemove(colKey, item.id)}
                             className="p-2 rounded-full hover:bg-red-100 transition-colors"
