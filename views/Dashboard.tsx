@@ -115,7 +115,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
       </header>
 
       {/* Daily Gratitude Prompt — shows when today's gratitude is empty */}
-      {!gratitudeDismissed && !(todayMetrics.gratitude || []).some((g: string) => (g || '').trim()) && (
+      {!gratitudeDismissed && (todayMetrics.gratitude || ['', '', '']).filter((g: string) => (g || '').trim()).length < 3 && (
         <div className="paper-card p-5 border-l-4 border-[#B19CD9] bg-white">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
