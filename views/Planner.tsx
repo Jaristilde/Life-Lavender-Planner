@@ -17,7 +17,6 @@ import {
 import MicButton from '../components/MicButton';
 import { DEFAULT_DAILY_METRICS } from '../constants';
 
-const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
 interface PlannerProps {
   data: YearData;
@@ -506,11 +505,9 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               return (
                 <div
                   key={colKey}
-                  {...(!isTouchDevice ? {
-                    onDragOver: (e: React.DragEvent) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); },
-                    onDragLeave: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); },
-                    onDrop: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }
-                  } : {})}
+                  onDragOver={(e: React.DragEvent) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); }}
+                  onDragLeave={(e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); }}
+                  onDrop={(e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }}
                   className={`flex flex-col ${colors.bg} rounded-2xl border ${colors.border} overflow-hidden min-h-[320px] transition-all`}
                 >
                   {/* Column Header */}
@@ -532,11 +529,11 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                     {(metrics.kanban?.[colKey] || []).map(item => (
                       <div
                         key={item.id}
-                        {...(!isTouchDevice ? { draggable: true, onDragStart: (e: React.DragEvent) => handleDragStart(e, item.id, colKey) } : {})}
-                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all ${!isTouchDevice ? 'cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]' : ''}`}
+                        draggable
+                        onDragStart={(e: React.DragEvent) => handleDragStart(e, item.id, colKey)}
+                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all`}
                       >
                         <div className="flex items-start gap-2">
-                          {!isTouchDevice && <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />}
                           <textarea
                             className="flex-1 bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
                             placeholder="Write here..."
@@ -547,34 +544,32 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                             onTouchStart={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <div className={`mt-2 flex items-center ${isTouchDevice ? 'justify-between' : 'justify-end opacity-0 group-hover:opacity-100'} transition-opacity`}>
-                          {/* Move-to buttons for iOS (replaces drag-and-drop) */}
-                          {isTouchDevice && (
-                            <div className="relative">
-                              <button
-                                onClick={() => setMoveMenuOpen(moveMenuOpen === item.id ? null : item.id)}
-                                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[#7B68A6] bg-white/60 hover:bg-white transition-colors"
-                              >
-                                <ArrowRight size={12} /> Move
-                              </button>
-                              {moveMenuOpen === item.id && (
-                                <div className="absolute left-0 bottom-full mb-1 bg-white rounded-xl shadow-lg border border-[#E6D5F0] p-1.5 z-20 min-w-[130px]">
-                                  {kanbanColumns.filter(c => c !== colKey).map(targetCol => (
-                                    <button
-                                      key={targetCol}
-                                      onClick={() => {
-                                        handleKanbanMove(colKey, item.id, targetCol);
-                                        setMoveMenuOpen(null);
-                                      }}
-                                      className="w-full text-left px-3 py-2 text-xs font-bold text-[#7B68A6] hover:bg-[#F8F7FC] rounded-lg transition-colors"
-                                    >
-                                      {colLabels[targetCol]}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
+                        <div className="mt-2 flex items-center justify-between">
+                          {/* Move-to menu (works on all platforms including touch) */}
+                          <div className="relative">
+                            <button
+                              onClick={() => setMoveMenuOpen(moveMenuOpen === item.id ? null : item.id)}
+                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[#7B68A6] bg-white/60 hover:bg-white transition-colors"
+                            >
+                              <ArrowRight size={12} /> Move
+                            </button>
+                            {moveMenuOpen === item.id && (
+                              <div className="absolute left-0 bottom-full mb-1 bg-white rounded-xl shadow-lg border border-[#E6D5F0] p-1.5 z-20 min-w-[130px]">
+                                {kanbanColumns.filter(c => c !== colKey).map(targetCol => (
+                                  <button
+                                    key={targetCol}
+                                    onClick={() => {
+                                      handleKanbanMove(colKey, item.id, targetCol);
+                                      setMoveMenuOpen(null);
+                                    }}
+                                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#7B68A6] hover:bg-[#F8F7FC] rounded-lg transition-colors"
+                                  >
+                                    {colLabels[targetCol]}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                           <button
                             onClick={() => handleKanbanRemove(colKey, item.id)}
                             className="p-2 rounded-full hover:bg-red-100 transition-colors"
