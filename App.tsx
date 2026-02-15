@@ -71,15 +71,16 @@ const App: React.FC = () => {
     };
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
 
-    // Hard absolute timeout — force exit loading after 3 seconds no matter what
+    // Hard absolute timeout — force exit loading after 15 seconds no matter what
     const hardTimeout = setTimeout(() => {
       if (mounted && !splashFinished.current) {
-        console.log('[Auth] Hard 3s timeout — forcing loading exit');
+        console.log('[Auth] Hard 15s timeout — forcing loading exit');
         splashFinished.current = true;
         CapSplash.hide().catch(() => {});
+        setLoadError('Connection timed out. Please check your network and try again.');
         setLoading(false);
       }
-    }, 3000);
+    }, 15000);
 
     console.log('[Auth] Setting up onAuthStateChange listener');
 
@@ -93,8 +94,9 @@ const App: React.FC = () => {
         if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
           if (session?.user) {
             setUser(session.user);
-            clearTimeout(hardTimeout);
+            // Do NOT clear hardTimeout here — let it remain as a safety net
             await loadUserData(session.user.id, mounted);
+            clearTimeout(hardTimeout); // Only clear after data loads successfully
           } else if (event === 'INITIAL_SESSION') {
             // No session on initial load — show auth screen
             console.log('[Auth] No session found, showing auth screen');

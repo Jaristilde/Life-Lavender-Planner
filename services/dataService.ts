@@ -1,47 +1,55 @@
 
 import { supabase } from './supabaseClient';
 
+// Timeout wrapper — rejects if a Supabase call takes longer than `ms`
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms / 1000}s`)), ms)
+    )
+  ]);
+}
+
 export const dataService = {
   // Profile
   async getProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    const { data, error } = await withTimeout(
+      supabase.from('profiles').select('*').eq('id', userId).single(),
+      10000,
+      'getProfile'
+    );
     if (error && error.code !== 'PGRST116') throw error;
     return data;
   },
 
   async updateProfile(userId: string, updates: any) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId)
-      .select()
-      .single();
+    const { data, error } = await withTimeout(
+      supabase.from('profiles').update(updates).eq('id', userId).select().single(),
+      10000,
+      'updateProfile'
+    );
     if (error) throw error;
     return data;
   },
 
   // Year Data
   async getYearData(userId: string, year: number) {
-    const { data, error } = await supabase
-      .from('years')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('year', year)
-      .single();
+    const { data, error } = await withTimeout(
+      supabase.from('years').select('*').eq('user_id', userId).eq('year', year).single(),
+      10000,
+      'getYearData'
+    );
     if (error && error.code !== 'PGRST116') throw error;
     return data;
   },
 
   async getAllYears(userId: string) {
-    const { data, error } = await supabase
-      .from('years')
-      .select('id, year, is_archived, created_at')
-      .eq('user_id', userId)
-      .order('year', { ascending: false });
+    const { data, error } = await withTimeout(
+      supabase.from('years').select('id, year, is_archived, created_at').eq('user_id', userId).order('year', { ascending: false }),
+      10000,
+      'getAllYears'
+    );
     if (error) throw error;
     return data;
   },
