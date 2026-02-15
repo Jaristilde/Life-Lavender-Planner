@@ -27,6 +27,7 @@ import Profile from './views/Profile';
 import Chatbot from './views/Chatbot';
 import DatabaseExplorer from './views/DatabaseExplorer';
 import AuthScreen from './views/AuthScreen';
+import Welcome from './views/Welcome';
 import WelcomeIntention from './views/WelcomeIntention';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
@@ -43,6 +44,7 @@ const App: React.FC = () => {
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [showWelcomeIntention, setShowWelcomeIntention] = useState(false);
+  const [showWelcomeLanding, setShowWelcomeLanding] = useState(true);
   const [onboardingAttempted, setOnboardingAttempted] = useState(false);
 
   const saveTimeout = useRef<any>(null);
@@ -252,6 +254,12 @@ const App: React.FC = () => {
       finishSplash();
     } catch (err: any) {
       console.error('[Data] Failed to load:', err?.code, err?.message || err?.msg || err);
+      // If auth error (deleted user, expired token), sign out to clear stale session
+      if (err?.code === '401' || err?.code === 401 || err?.message?.includes('JWT') || err?.message?.includes('token')) {
+        console.log('[Auth] Stale session detected — signing out');
+        await authService.signOut();
+        return;
+      }
       if (isMounted) {
         const msg = err?.message || err?.msg || 'Failed to load your data';
         setLoadError(msg);
@@ -333,7 +341,12 @@ const App: React.FC = () => {
       </div>
     );
   }
-  if (!user) return <AuthScreen />;
+  if (!user) {
+    if (showWelcomeLanding) {
+      return <Welcome onContinue={() => setShowWelcomeLanding(false)} />;
+    }
+    return <AuthScreen />;
+  }
 
   if (loadError) {
     return (
