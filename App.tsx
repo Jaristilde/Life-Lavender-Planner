@@ -85,54 +85,58 @@ const App: React.FC = () => {
 
     console.log('[Auth] Setting up onAuthStateChange listener');
 
-    // Track whether initial data load has completed to prevent duplicate loads
-    let dataLoaded = false;
+    // Track whether data load has been triggered to prevent duplicates
+    let dataLoadTriggered = false;
 
-    // Single auth source: onAuthStateChange fires INITIAL_SESSION on setup
-    const subscription = authService.onAuthStateChange(async (event, session) => {
+    // Helper: load data OUTSIDE the auth callback to avoid supabase-js auth lock.
+    // The supabase client can deadlock when queries run inside onAuthStateChange
+    // because the internal token refresh hasn't completed yet.
+    const triggerDataLoad = (userId: string) => {
+      if (dataLoadTriggered) {
+        console.log('[Auth] Data load already triggered, skipping');
+        return;
+      }
+      dataLoadTriggered = true;
+      // Defer to next tick so auth callback completes first
+      setTimeout(async () => {
+        if (!mounted) return;
+        try {
+          await loadUserData(userId, mounted);
+          clearTimeout(hardTimeout);
+        } catch (err: any) {
+          console.error('[Auth] Data load error:', err?.message || err);
+          if (mounted) {
+            setLoadError(err?.message || err?.msg || 'Connection error');
+            clearTimeout(hardTimeout);
+            finishSplash();
+          }
+        }
+      }, 0);
+    };
+
+    const subscription = authService.onAuthStateChange((event: string, session: any) => {
       if (!mounted) return;
 
       console.log('[Auth] Event:', event, '| User:', session?.user?.email || 'none');
 
-      try {
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (session?.user) {
-            setUser(session.user);
-            // Skip duplicate load if data already loaded for this session
-            if (dataLoaded && event !== 'TOKEN_REFRESHED') {
-              console.log('[Auth] Data already loaded, skipping duplicate load for', event);
-              clearTimeout(hardTimeout);
-              return;
-            }
-            await loadUserData(session.user.id, mounted);
-            dataLoaded = true;
-            clearTimeout(hardTimeout);
-          } else if (event === 'INITIAL_SESSION') {
-            // No session on initial load — show auth screen
-            console.log('[Auth] No session found, showing auth screen');
-            clearTimeout(hardTimeout);
-            finishSplash();
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('[Auth] User signed out');
-          setUser(null);
-          setProfile(null);
-          setActiveYearData(null);
-          setLoadError(null);
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        if (session?.user) {
+          setUser(session.user);
+          triggerDataLoad(session.user.id);
+        } else if (event === 'INITIAL_SESSION') {
+          console.log('[Auth] No session found, showing auth screen');
           clearTimeout(hardTimeout);
           finishSplash();
         }
-      } catch (err: any) {
-        console.error('[Auth] Handler error:', event, err?.message || err);
-        if (mounted) {
-          if (err?.name === 'AbortError') {
-            console.log('[Auth] AbortError in handler — retrying via fallback');
-          } else {
-            setLoadError(err?.message || err?.msg || 'Connection error');
-          }
-          clearTimeout(hardTimeout);
-          finishSplash();
-        }
+      } else if (event === 'SIGNED_OUT') {
+        console.log('[Auth] User signed out');
+        dataLoadTriggered = false;
+        setUser(null);
+        setProfile(null);
+        setActiveYearData(null);
+        setLoadError(null);
+        clearTimeout(hardTimeout);
+        finishSplash();
       }
     });
 
