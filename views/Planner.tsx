@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { Capacitor } from '@capacitor/core';
 import { YearData, GoogleSyncSettings, PlannerFocus, UserDailyMetrics, KanbanItem } from '../types';
 import {
   ChevronLeft,
@@ -18,7 +17,7 @@ import {
 import MicButton from '../components/MicButton';
 import { DEFAULT_DAILY_METRICS } from '../constants';
 
-const isNative = Capacitor.isNativePlatform();
+const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
 interface PlannerProps {
   data: YearData;
@@ -507,7 +506,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
               return (
                 <div
                   key={colKey}
-                  {...(!isNative ? {
+                  {...(!isTouchDevice ? {
                     onDragOver: (e: React.DragEvent) => { e.preventDefault(); e.currentTarget.classList.add('ring-2', 'ring-[#B19CD9]'); },
                     onDragLeave: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); },
                     onDrop: (e: React.DragEvent) => { e.currentTarget.classList.remove('ring-2', 'ring-[#B19CD9]'); handleDrop(e, colKey); }
@@ -533,11 +532,11 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                     {(metrics.kanban?.[colKey] || []).map(item => (
                       <div
                         key={item.id}
-                        {...(!isNative ? { draggable: true, onDragStart: (e: React.DragEvent) => handleDragStart(e, item.id, colKey) } : {})}
-                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all ${!isNative ? 'cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]' : ''}`}
+                        {...(!isTouchDevice ? { draggable: true, onDragStart: (e: React.DragEvent) => handleDragStart(e, item.id, colKey) } : {})}
+                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all ${!isTouchDevice ? 'cursor-grab active:cursor-grabbing active:rotate-1 active:scale-[1.02]' : ''}`}
                       >
                         <div className="flex items-start gap-2">
-                          {!isNative && <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />}
+                          {!isTouchDevice && <GripVertical size={14} className="text-[#B19CD9]/40 mt-1.5 flex-shrink-0" />}
                           <textarea
                             className="flex-1 bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
                             placeholder="Write here..."
@@ -548,9 +547,9 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                             onTouchStart={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <div className={`mt-2 flex items-center ${isNative ? 'justify-between' : 'justify-end opacity-0 group-hover:opacity-100'} transition-opacity`}>
+                        <div className={`mt-2 flex items-center ${isTouchDevice ? 'justify-between' : 'justify-end opacity-0 group-hover:opacity-100'} transition-opacity`}>
                           {/* Move-to buttons for iOS (replaces drag-and-drop) */}
-                          {isNative && (
+                          {isTouchDevice && (
                             <div className="relative">
                               <button
                                 onClick={() => setMoveMenuOpen(moveMenuOpen === item.id ? null : item.id)}
