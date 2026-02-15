@@ -27,7 +27,7 @@ import Profile from './views/Profile';
 import Chatbot from './views/Chatbot';
 import DatabaseExplorer from './views/DatabaseExplorer';
 import AuthScreen from './views/AuthScreen';
-// SplashScreen and Welcome removed — no overlays on first render
+import WelcomeIntention from './views/WelcomeIntention';
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -363,9 +363,18 @@ const App: React.FC = () => {
     );
   }
 
-  // Mark welcome as seen (no gate screen — always go to dashboard)
-  if (!localStorage.getItem('hasSeenWelcome')) {
-    localStorage.setItem('hasSeenWelcome', 'true');
+  // First-time user: show welcome + intention screen (no blur, lightweight)
+  if (profile && profile.onboarding_completed && !profile.season_intention) {
+    return (
+      <WelcomeIntention
+        userName={profile.name || 'Friend'}
+        onSave={async (intention) => {
+          const updates = { season_intention: intention || 'Clarity' };
+          await dataService.updateProfile(user.id, updates);
+          setProfile({ ...profile, ...updates });
+        }}
+      />
+    );
   }
 
   const renderView = () => {
