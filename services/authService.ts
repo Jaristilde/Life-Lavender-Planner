@@ -1,14 +1,23 @@
 
 import { supabase } from './supabaseClient';
 
+const isNative = () => typeof (window as any).Capacitor !== 'undefined';
+
+const getRedirectUrl = () => {
+  if (isNative()) {
+    return 'lavenderlifeplanner://auth-callback';
+  }
+  return window.location.origin;
+};
+
 export const authService = {
   async signUp(email: string, password: string, name: string) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      options: { 
+      options: {
         data: { full_name: name },
-        emailRedirectTo: window.location.origin
+        emailRedirectTo: getRedirectUrl()
       }
     });
     if (error) throw error;
@@ -24,7 +33,7 @@ export const authService = {
   async signInWithApple() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: getRedirectUrl() }
     });
     if (error) throw error;
     return data;
@@ -33,7 +42,7 @@ export const authService = {
   async signInWithGoogle() {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: getRedirectUrl() }
     });
     if (error) throw error;
     return data;
@@ -56,7 +65,7 @@ export const authService = {
 
   async resetPassword(email: string) {
     const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin
+      redirectTo: getRedirectUrl()
     });
     if (error) throw error;
     return data;

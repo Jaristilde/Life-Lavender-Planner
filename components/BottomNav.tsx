@@ -25,10 +25,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E6D5F0] shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50 px-4 flex items-center justify-around h-[70px] pb-[env(safe-area-inset-bottom)]"
+      className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 flex items-center"
+      style={{ height: '60px', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {tabs.map(tab => {
-        const isActive = currentView === tab.id || (tab.id === 'more' && false); // More is a sheet, not a view
+        const isActive = tab.id !== 'more' && currentView === tab.id;
 
         return (
           <button
@@ -40,20 +41,16 @@ const BottomNav: React.FC<BottomNavProps> = ({ currentView, setView, onMoreClick
                 setView(tab.id);
               }
             }}
-            className={`flex flex-col items-center justify-center gap-1 min-w-[64px] h-full transition-all active:scale-90 ${
-              isActive ? 'text-[#7B68A6]' : 'text-[#C4B8E0]'
-            }`}
+            className="flex-1 flex flex-col items-center justify-center gap-0.5 h-full"
           >
-            <div className="relative flex flex-col items-center">
-              <tab.icon
-                size={24}
-                className={`transition-all ${isActive ? 'stroke-[2.5px]' : 'stroke-[1.5px]'}`}
-              />
-              {isActive && (
-                <div className="absolute -bottom-1.5 w-1 h-1 bg-[#7B68A6] rounded-full" />
-              )}
-            </div>
-            <span className={`text-[10px] font-bold tracking-tight transition-all ${isActive ? 'text-[#7B68A6]' : 'text-[#C4B8E0]'}`}>
+            <tab.icon
+              size={20}
+              className={isActive ? 'text-[#B19CD9]' : 'text-[#999]'}
+              strokeWidth={isActive ? 2.5 : 1.5}
+            />
+            <span
+              className={`text-[10px] font-semibold ${isActive ? 'text-[#B19CD9]' : 'text-[#999]'}`}
+            >
               {tab.label}
             </span>
           </button>

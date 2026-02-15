@@ -57,14 +57,9 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   }, [value, duration, decimals]);
 
   return (
-    <motion.span
-      className={className}
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4 }}
-    >
+    <span className={className}>
       {prefix}{displayValue}{suffix}
-    </motion.span>
+    </span>
   );
 };
 
@@ -251,20 +246,7 @@ export const TextReveal: React.FC<TextRevealProps> = ({
 }) => {
   return (
     <span className={className}>
-      {text.split('').map((char, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{
-            duration: 0.15,
-            delay: delay + i * speed,
-            ease: 'easeOut'
-          }}
-        >
-          {char}
-        </motion.span>
-      ))}
+      {text}
     </span>
   );
 };

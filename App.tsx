@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
+import { SplashScreen as CapSplash } from '@capacitor/splash-screen';
 import Sidebar from './components/Sidebar';
 import BottomNav from './components/BottomNav';
 import MoreSheet from './components/MoreSheet';
@@ -16,7 +17,7 @@ import SimplifyChallenge from './views/SimplifyChallenge';
 import Reflections from './views/Reflections';
 import TrackingCenter from './views/TrackingCenter';
 import FinancialWorkbook from './views/FinancialWorkbook';
-import MorningAlignmentModal from './components/MorningAlignmentModal';
+// MorningAlignmentModal removed from first-render path
 import PremiumOnboarding from './views/PremiumOnboarding';
 import MonthlyReset from './views/MonthlyReset';
 import MorningReset from './views/MorningReset';
@@ -26,46 +27,36 @@ import Profile from './views/Profile';
 import Chatbot from './views/Chatbot';
 import DatabaseExplorer from './views/DatabaseExplorer';
 import AuthScreen from './views/AuthScreen';
-import SplashScreen from './components/SplashScreen';
-import Welcome from './views/Welcome';
+// SplashScreen and Welcome removed — no overlays on first render
 import { Cloud, CloudOff, Loader2, CheckCircle2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [splashFading, setSplashFading] = useState(false);
-  const [splashVisible, setSplashVisible] = useState(true);
   const [activeYearId, setActiveYearId] = useState<string>('');
   const [activeYearData, setActiveYearData] = useState<any>(null);
   const [allYears, setAllYears] = useState<any[]>([]);
   const [currentView, setCurrentView] = useState('dashboard');
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMoreSheetOpen, setIsMoreSheetOpen] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [showWelcome, setShowWelcome] = useState(() => !localStorage.getItem('hasSeenWelcome'));
 
   const saveTimeout = useRef<any>(null);
-  const splashStart = useRef(Date.now());
   const loadingData = useRef(false);
+
+  // Kill native splash overlay the instant the component mounts
+  useEffect(() => {
+    CapSplash.hide().catch(() => {});
+  }, []);
   const splashFinished = useRef(false);
 
   const finishSplash = () => {
-    if (splashFinished.current) return; // idempotent — only run once
+    if (splashFinished.current) return;
     splashFinished.current = true;
-
-    const elapsed = Date.now() - splashStart.current;
-    const minDisplay = 1500;
-    const remaining = Math.max(0, minDisplay - elapsed);
-
-    setTimeout(() => {
-      setSplashFading(true);
-      setTimeout(() => {
-        setSplashVisible(false);
-        setLoading(false);
-      }, 500);
-    }, remaining);
+    CapSplash.hide().catch(() => {});
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -80,16 +71,13 @@ const App: React.FC = () => {
     };
     window.addEventListener('unhandledrejection', handleUnhandledRejection);
 
-    // Hard absolute timeout — force exit splash after 3 seconds no matter what
+    // Hard absolute timeout — force exit loading after 3 seconds no matter what
     const hardTimeout = setTimeout(() => {
       if (mounted && !splashFinished.current) {
-        console.log('[Auth] Hard 3s timeout — forcing splash exit');
+        console.log('[Auth] Hard 3s timeout — forcing loading exit');
         splashFinished.current = true;
-        setSplashFading(true);
-        setTimeout(() => {
-          setSplashVisible(false);
-          setLoading(false);
-        }, 500);
+        CapSplash.hide().catch(() => {});
+        setLoading(false);
       }
     }, 3000);
 
@@ -307,29 +295,34 @@ const App: React.FC = () => {
     }, 1000);
   };
 
-  if (loading || splashVisible) {
-    return <SplashScreen fadingOut={splashFading} />;
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-[#F8F7FC]" style={{ minHeight: '100%' }}>
+        <div className="text-center space-y-3">
+          <div className="w-10 h-10 border-3 border-[#B19CD9] border-t-transparent rounded-full mx-auto" style={{ animation: 'spin 0.8s linear infinite', borderWidth: '3px' }} />
+          <p className="text-xs text-[#7B68A6] font-medium">Loading...</p>
+        </div>
+      </div>
+    );
   }
   if (!user) return <AuthScreen />;
 
   if (loadError || (!activeYearData && !loading)) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6">
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[32px] shadow-2xl max-w-sm w-full text-center space-y-6">
+      <div className="flex-1 bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6" style={{ minHeight: '100%' }}>
+        <div className="bg-white p-8 rounded-[32px] shadow-2xl max-w-sm w-full text-center space-y-6">
           <div className="text-4xl">🦋</div>
-          <h2 className="serif text-2xl font-bold text-white">Connection Issue</h2>
-          <p className="text-white/70 text-sm">{loadError || 'Unable to load your data. Please try again.'}</p>
+          <h2 className="serif text-2xl font-bold text-[#7B68A6]">Connection Issue</h2>
+          <p className="text-gray-500 text-sm">{loadError || 'Unable to load your data. Please try again.'}</p>
           <div className="space-y-3">
             <button
               onClick={() => {
                 setLoadError(null);
                 setLoading(true);
-                setSplashVisible(true);
-                setSplashFading(false);
-                splashStart.current = Date.now();
+                splashFinished.current = false;
                 loadUserData(user.id, true);
               }}
-              className="w-full py-3 bg-white text-[#7B68A6] font-bold rounded-2xl hover:bg-gray-50 transition-all"
+              className="w-full py-3 bg-[#7B68A6] text-white font-bold rounded-2xl hover:bg-[#B19CD9] transition-all"
             >
               Try Again
             </button>
@@ -341,7 +334,7 @@ const App: React.FC = () => {
                 setActiveYearData(null);
                 setLoadError(null);
               }}
-              className="w-full py-3 bg-white/10 text-white font-bold rounded-2xl hover:bg-white/20 transition-all text-sm"
+              className="w-full py-3 bg-gray-100 text-gray-500 font-bold rounded-2xl hover:bg-gray-200 transition-all text-sm"
             >
               Sign Out & Try Different Account
             </button>
@@ -370,13 +363,9 @@ const App: React.FC = () => {
     );
   }
 
-  if (showWelcome) {
-    return (
-      <Welcome onContinue={() => {
-        localStorage.setItem('hasSeenWelcome', 'true');
-        setShowWelcome(false);
-      }} />
-    );
+  // Mark welcome as seen (no gate screen — always go to dashboard)
+  if (!localStorage.getItem('hasSeenWelcome')) {
+    localStorage.setItem('hasSeenWelcome', 'true');
   }
 
   const renderView = () => {
@@ -523,7 +512,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F7FC]">
+    <div className="flex flex-col bg-[#F8F7FC]" style={{ minHeight: '100%', paddingLeft: 'env(safe-area-inset-left)', paddingRight: 'env(safe-area-inset-right)' }}>
       <Sidebar
         currentView={currentView}
         setView={setCurrentView}
@@ -537,18 +526,18 @@ const App: React.FC = () => {
         userName={profile?.name || 'Friend'}
       />
 
-      <main className={`transition-all duration-300 min-h-screen ${isSidebarOpen ? 'lg:pl-72' : ''} pb-[90px] lg:pb-0`}>
-        <header className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-[#eee] sticky top-0 z-30">
-          <h1 className="text-xl serif font-bold text-[#7B68A6]">Lavender Life Planner</h1>
+      <main className={`flex-1 flex flex-col ${isSidebarOpen ? 'lg:pl-72' : ''}`} style={{ paddingBottom: 'calc(60px + env(safe-area-inset-bottom))' }}>
+        <header className="lg:hidden flex items-center justify-between bg-white border-b border-[#eee] fixed top-0 left-0 right-0 z-50" style={{ padding: '6px 16px', paddingTop: 'calc(6px + env(safe-area-inset-top))' }}>
+          <h1 className="text-sm font-medium text-[#7B68A6] tracking-wide">Lavender Life Planner</h1>
           <div className="flex items-center gap-2">
-             {saveStatus === 'saving' && <Loader2 size={16} className="text-[#B19CD9] animate-spin" />}
-             {saveStatus === 'saved' && <CheckCircle2 size={16} className="text-green-400" />}
-             {saveStatus === 'error' && <CloudOff size={16} className="text-red-400" />}
+             {saveStatus === 'saving' && <Loader2 size={14} className="text-[#B19CD9] animate-spin" />}
+             {saveStatus === 'saved' && <CheckCircle2 size={14} className="text-green-400" />}
+             {saveStatus === 'error' && <CloudOff size={14} className="text-red-400" />}
           </div>
         </header>
 
-        <div className="max-w-7xl mx-auto p-4 md:p-8 lg:p-10 relative">
-          <div className="hidden lg:flex fixed top-6 right-8 z-[60] items-center gap-2 px-4 py-2 bg-white/50 backdrop-blur-md rounded-full border border-white/50 text-[10px] font-bold uppercase tracking-widest text-gray-400 shadow-sm">
+        <div className="flex-1 max-w-7xl mx-auto w-full relative" style={{ padding: '12px 16px', paddingTop: 'calc(45px + env(safe-area-inset-top))' }}>
+          <div className="hidden lg:flex fixed top-6 right-8 z-[60] items-center gap-2 px-4 py-2 bg-white rounded-full border border-[#eee] text-[10px] font-bold uppercase tracking-widest text-gray-400 shadow-sm">
              {saveStatus === 'idle' && <><Cloud size={14} className="text-gray-300" /> Cloud Synced</>}
              {saveStatus === 'saving' && <><Loader2 size={14} className="text-[#B19CD9] animate-spin" /> Syncing...</>}
              {saveStatus === 'saved' && <><CheckCircle2 size={14} className="text-green-400" /> Changes Saved</>}
@@ -575,12 +564,6 @@ const App: React.FC = () => {
       </div>
 
       <Chatbot userId={user.id} userName={profile?.name || 'Friend'} />
-
-      <MorningAlignmentModal
-        isOpen={false}
-        onClose={() => {}}
-        onSave={() => {}}
-      />
     </div>
   );
 };

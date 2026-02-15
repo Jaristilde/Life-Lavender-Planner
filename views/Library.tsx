@@ -69,7 +69,7 @@ const Library: React.FC<LibraryProps> = ({ data, updateData, userId }) => {
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-10">
       <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
         <div>
           <h1 className="text-4xl font-bold serif text-[#7B68A6] mb-1">Your Library</h1>

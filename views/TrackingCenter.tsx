@@ -23,7 +23,14 @@ interface TrackingCenterProps {
 
 const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => {
   const today = new Date().toISOString().split('T')[0];
-  const metrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
+  const rawMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
+  // Clean up any obvious test data patterns (e.g. "TestTestTest...")
+  const cleanIntention = (() => {
+    const val = rawMetrics?.daily_intention || '';
+    if (/^(.{2,8})\1{3,}/.test(val)) return ''; // repeated pattern like "TestTestTest"
+    return val;
+  })();
+  const metrics = { ...rawMetrics, daily_intention: cleanIntention };
 
   const updateMetrics = (updates: Partial<UserDailyMetrics>) => {
     if (data?.isArchived) return;
@@ -59,33 +66,39 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
   const streak = Object.values(data?.dailyMetrics || {}).filter(m => (m as UserDailyMetrics)?.morning_ritual_completed).length;
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
-      <header className="flex flex-col md:flex-row items-center justify-between gap-6">
+    <div className="space-y-10 pb-20">
+      <header className="sticky z-10 bg-[#F8F7FC] pb-2 flex flex-col md:flex-row items-center justify-between gap-3" style={{ top: 'calc(33px + env(safe-area-inset-top))' }}>
         <div>
-          <h1 className="text-4xl font-bold mb-1">Tracking Center</h1>
-          <p className="text-gray-500 italic">"Measure what matters, nurture what grows."</p>
+          <h1 className="text-xl md:text-3xl font-bold mb-0.5">Tracking Center</h1>
+          <p className="text-gray-500 italic text-sm">"Measure what matters, nurture what grows."</p>
         </div>
-        <div className="flex items-center gap-4 bg-white paper-card px-6 py-3">
-          <div className="flex items-center gap-2">
-            <Sparkles className="text-[#D4AF37]" size={18} />
-            <span className="text-sm font-bold text-[#7B68A6]">{streak} Day Streak</span>
+        <div className="flex items-center gap-3 bg-white paper-card px-4 py-2">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="text-[#D4AF37]" size={14} />
+            <span className="text-xs font-bold text-[#7B68A6]">{streak} Day Streak</span>
           </div>
-          <div className="h-4 w-[1px] bg-gray-100" />
-          <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">{new Date().toDateString()}</div>
+          <div className="h-3 w-[1px] bg-gray-200" />
+          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{new Date().toDateString()}</div>
         </div>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="paper-card p-8 bg-gradient-to-br from-white to-[#F8F7FC] border-t-8 border-[#B19CD9]">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-[#E6D5F0] rounded-xl"><Sparkles size={20} className="text-[#7B68A6]" /></div>
-            <h2 className="text-2xl font-bold">Morning Ritual</h2>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+        <div className="paper-card p-5 md:p-8 bg-gradient-to-br from-white to-[#F8F7FC] border-t-4 border-[#B19CD9]">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-1.5 bg-[#E6D5F0] rounded-lg"><Sparkles size={16} className="text-[#7B68A6]" /></div>
+            <h2 className="text-base font-bold">Morning Ritual</h2>
           </div>
           
           <div className="space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Intention</label>
-              <p className="text-sm italic text-gray-700">{metrics?.daily_intention || 'No intention set yet.'}</p>
+              <input
+                type="text"
+                className="w-full text-sm italic text-gray-700 bg-transparent border-b border-[#eee] outline-none focus:border-[#B19CD9] py-1"
+                placeholder="No intention set yet."
+                value={metrics?.daily_intention || ''}
+                onChange={(e) => updateMetrics({ daily_intention: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <label className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Commitment</label>
@@ -100,11 +113,11 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        <div className="paper-card p-8 lg:col-span-2">
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#FFEEDD] rounded-xl"><Zap size={20} className="text-[#FF9933]" /></div>
-              <h2 className="text-2xl font-bold">Energy Index</h2>
+        <div className="paper-card p-5 md:p-8 lg:col-span-2">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-[#FFEEDD] rounded-lg"><Zap size={16} className="text-[#FF9933]" /></div>
+              <h2 className="text-base font-bold">Energy Index</h2>
             </div>
             <div className="text-right">
               <span className="text-xs font-bold text-gray-400 uppercase">Today's Level</span>
@@ -146,10 +159,10 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        <div className="paper-card p-8">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-[#D1F7E9] rounded-xl"><Wind size={20} className="text-[#10B981]" /></div>
-            <h2 className="text-2xl font-bold">Meditation Log</h2>
+        <div className="paper-card p-5 md:p-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-1.5 bg-[#D1F7E9] rounded-lg"><Wind size={16} className="text-[#10B981]" /></div>
+            <h2 className="text-base font-bold">Meditation Log</h2>
           </div>
           
           <div className="space-y-6">
@@ -168,10 +181,10 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        <div className="paper-card p-8">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-[#E6D5F0] rounded-xl"><Dumbbell size={20} className="text-[#7B68A6]" /></div>
-            <h2 className="text-2xl font-bold">Movement Log</h2>
+        <div className="paper-card p-5 md:p-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-1.5 bg-[#E6D5F0] rounded-lg"><Dumbbell size={16} className="text-[#7B68A6]" /></div>
+            <h2 className="text-base font-bold">Movement Log</h2>
           </div>
           
           <div className="space-y-6">
@@ -194,10 +207,10 @@ const TrackingCenter: React.FC<TrackingCenterProps> = ({ data, updateData }) => 
           </div>
         </div>
 
-        <div className="paper-card p-8">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-[#FFEEDD] rounded-xl"><Wallet size={20} className="text-[#D4AF37]" /></div>
-            <h2 className="text-2xl font-bold">Financial Actions</h2>
+        <div className="paper-card p-5 md:p-8">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="p-1.5 bg-[#FFEEDD] rounded-lg"><Wallet size={16} className="text-[#D4AF37]" /></div>
+            <h2 className="text-base font-bold">Financial Actions</h2>
           </div>
 
           <div className="space-y-3">

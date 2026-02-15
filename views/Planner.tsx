@@ -13,6 +13,7 @@ import {
   Trash2,
   RefreshCw
 } from 'lucide-react';
+import MicButton from '../components/MicButton';
 import { DEFAULT_DAILY_METRICS } from '../constants';
 
 interface PlannerProps {
@@ -210,10 +211,10 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
     };
 
     return (
-      <div className="max-w-4xl mx-auto space-y-0 pb-20 bg-white shadow-2xl rounded-2xl overflow-hidden border border-[#eee] animate-in fade-in duration-700">
+      <div className="max-w-4xl mx-auto space-y-0 pb-20 bg-white shadow-2xl rounded-2xl overflow-hidden border border-[#eee]">
 
         {/* 1. HEADER AREA */}
-        <div className="relative w-full h-48 md:h-64 overflow-hidden">
+        <div className="relative w-full overflow-hidden" style={{ height: '200px' }}>
           <img
             src="/butterfly1.png"
             alt="Lavender Butterfly"
@@ -384,13 +385,18 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         {/* 8. SELF-LOVE PROMPT */}
         <section className="bg-white p-8 space-y-4">
           <h3 className="serif text-xl font-bold text-[#7B68A6]">One Thing You Love About Yourself Today:</h3>
-          <input
-            type="text"
-            className="w-full workbook-input italic text-[#7B68A6] text-lg text-center"
-            placeholder="Write a self-love affirmation..."
-            value={metrics.self_love_statement || ''}
-            onChange={e => updateDailyMetrics(selectedDate, { self_love_statement: e.target.value })}
-          />
+          <div className="relative">
+            <input
+              type="text"
+              className="w-full workbook-input italic text-[#7B68A6] text-lg text-center pr-12"
+              placeholder="Write a self-love affirmation..."
+              value={metrics.self_love_statement || ''}
+              onChange={e => updateDailyMetrics(selectedDate, { self_love_statement: e.target.value })}
+            />
+            <div className="absolute right-3 top-1/2 -translate-y-1/2">
+              <MicButton onTranscript={(text) => updateDailyMetrics(selectedDate, { self_love_statement: (metrics.self_love_statement ? metrics.self_love_statement + ' ' : '') + text })} />
+            </div>
+          </div>
         </section>
 
         {/* 9. EXERCISE TRACKER */}
@@ -551,7 +557,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
       theme: '', financialTarget: '', wellnessTarget: '', wordOfMonth: '', reflectionPreview: ''
     };
     return (
-      <div className="flex flex-col lg:flex-row gap-8 animate-in fade-in slide-in-from-left-4 duration-500">
+      <div className="flex flex-col lg:flex-row gap-8">
         <div className="lg:w-1/3 space-y-6">
           <div className="paper-card p-8 bg-white border-l-8 border-[#B19CD9]">
             <h3 className="serif text-2xl font-bold text-[#7B68A6] mb-8">Monthly Strategy</h3>
@@ -713,7 +719,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
     };
 
     return (
-      <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="space-y-6">
 
         {/* WEEKLY HEADER */}
         <div className="bg-white rounded-2xl shadow-sm border border-[#eee] overflow-hidden">
@@ -758,7 +764,10 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             <div className="bg-[#E6D5F0] px-4 py-2.5">
               <span className="serif font-bold text-[#7B68A6] text-sm">Quick Notes</span>
             </div>
-            <div className="flex-1 p-3 bg-[#F8F7FC]/50">
+            <div className="flex-1 p-3 bg-[#F8F7FC]/50 relative">
+              <div className="absolute top-2 right-2">
+                <MicButton onTranscript={(text) => updateWeek({ quickNotes: (week.quickNotes ? week.quickNotes + ' ' : '') + text })} />
+              </div>
               <textarea
                 className="w-full h-full min-h-[160px] bg-transparent text-xs text-gray-700 outline-none resize-none leading-relaxed placeholder:italic placeholder:text-[#B19CD9]/40"
                 placeholder="Jot down anything for this week..."
@@ -817,13 +826,16 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
             <div className="bg-[#E6D5F0] px-4 py-2.5">
               <span className="serif font-bold text-[#7B68A6] text-sm">Weekly Notes & Reflections</span>
             </div>
-            <div className="p-4">
+            <div className="p-4 relative">
               <textarea
-                className="w-full min-h-[200px] bg-[#F8F7FC]/50 rounded-lg p-3 text-sm text-gray-700 outline-none resize-none leading-relaxed border border-[#E6D5F0]/30 focus:border-[#B19CD9] transition-colors placeholder:italic placeholder:text-[#B19CD9]/40"
+                className="w-full min-h-[200px] bg-[#F8F7FC]/50 rounded-lg p-3 pr-12 text-sm text-gray-700 outline-none resize-none leading-relaxed border border-[#E6D5F0]/30 focus:border-[#B19CD9] transition-colors placeholder:italic placeholder:text-[#B19CD9]/40"
                 placeholder="Reflect on your week, write intentions, capture thoughts..."
                 value={week.notes || ''}
                 onChange={e => updateWeek({ notes: e.target.value })}
               />
+              <div className="absolute right-7 top-7">
+                <MicButton onTranscript={(text) => updateWeek({ notes: (week.notes ? week.notes + ' ' : '') + text })} />
+              </div>
             </div>
           </div>
         </div>
@@ -855,30 +867,30 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   };
 
   return (
-    <div className="space-y-8 min-h-screen pb-20">
-      <header className="flex flex-col md:flex-row items-center justify-between gap-6">
+    <div className="space-y-8 flex-1 pb-20">
+      <header className="sticky z-10 bg-[#F8F7FC] pb-2 flex flex-col md:flex-row items-center justify-between gap-3" style={{ top: 'calc(33px + env(safe-area-inset-top))' }}>
         <div>
-          <h1 className="text-4xl font-bold mb-1 serif text-[#7B68A6]">Life Planner</h1>
-          <p className="text-gray-500 italic">Navigate from vision to execution seamlessly.</p>
+          <h1 className="text-xl md:text-3xl font-bold mb-0.5 serif text-[#7B68A6]">Life Planner</h1>
+          <p className="text-gray-500 italic text-sm">Navigate from vision to execution seamlessly.</p>
         </div>
-        <div className="flex items-center gap-2 md:gap-4 bg-white p-1 rounded-2xl shadow-sm border border-[#eee]">
+        <div className="flex items-center gap-1 bg-white p-0.5 rounded-xl shadow-sm border border-[#eee]">
           <button
             onClick={() => setViewMode('monthly')}
-            className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'monthly' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${viewMode === 'monthly' ? 'bg-[#B19CD9] text-white shadow-md' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
-            <LayoutGrid size={16} /> Monthly
+            <LayoutGrid size={14} /> Monthly
           </button>
           <button
             onClick={() => setViewMode('weekly')}
-            className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'weekly' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${viewMode === 'weekly' ? 'bg-[#B19CD9] text-white shadow-md' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
-            <Columns size={16} /> Weekly
+            <Columns size={14} /> Weekly
           </button>
           <button
             onClick={() => setViewMode('daily')}
-            className={`flex items-center gap-2 px-4 md:px-6 py-2 md:py-3 rounded-xl font-bold text-xs transition-all ${viewMode === 'daily' ? 'bg-[#B19CD9] text-white shadow-lg' : 'text-gray-400 hover:text-[#7B68A6]'}`}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-bold text-[11px] transition-all ${viewMode === 'daily' ? 'bg-[#B19CD9] text-white shadow-md' : 'text-gray-400 hover:text-[#7B68A6]'}`}
           >
-            <CheckSquare size={16} /> Daily
+            <CheckSquare size={14} /> Daily
           </button>
         </div>
       </header>

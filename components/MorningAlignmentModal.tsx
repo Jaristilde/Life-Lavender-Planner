@@ -1,100 +1,91 @@
 
 import React, { useState } from 'react';
-import { X, Sparkles, Sun, DollarSign, Heart, ChevronRight } from 'lucide-react';
+import { Sparkles, Sun, DollarSign, Heart, ChevronRight } from 'lucide-react';
 import { UserDailyMetrics } from '../types';
+import ButterflyIcon from './ButterflyIcon';
 
 interface MorningAlignmentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (metrics: Partial<UserDailyMetrics>) => void;
-  initialData?: UserDailyMetrics;
+  onComplete: (metrics: Partial<UserDailyMetrics>) => void;
+  userName?: string;
 }
 
-const MorningAlignmentModal: React.FC<MorningAlignmentModalProps> = ({ isOpen, onClose, onSave, initialData }) => {
-  const [step, setStep] = useState(1);
+const MorningAlignmentModal: React.FC<MorningAlignmentModalProps> = ({ onComplete, userName }) => {
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState({
-    intention_text: initialData?.intention_text || '',
-    focus_commitment: initialData?.focus_commitment || '',
-    financial_action_text: initialData?.financial_action_text || '',
-    self_trust_statement: initialData?.self_trust_statement || '',
-    energy_level: initialData?.energy_level || 5
+    intention_text: '',
+    focus_commitment: '',
+    financial_action_text: '',
+    self_trust_statement: '',
+    energy_level: 5
   });
 
-  if (!isOpen) return null;
-
-  const handleSave = () => {
-    onSave({
+  const handleComplete = () => {
+    onComplete({
       ...formData,
       morning_alignment_completed: true
     });
-    onClose();
   };
 
   const steps = [
     {
       title: "Set Your Intention",
-      icon: <Sun className="text-[#B19CD9]" />,
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500 italic">"How do you want to feel today?"</p>
-          <input
-            autoFocus
-            className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] transition-all"
-            placeholder="e.g. Peaceful and productive..."
-            value={formData.intention_text}
-            onChange={(e) => setFormData({ ...formData, intention_text: e.target.value })}
-          />
-        </div>
+      subtitle: "How do you want to feel today?",
+      icon: <Sun size={24} className="text-[#B19CD9]" />,
+      field: (
+        <input
+          autoFocus
+          className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm"
+          placeholder="e.g. Peaceful and productive..."
+          value={formData.intention_text}
+          onChange={(e) => setFormData({ ...formData, intention_text: e.target.value })}
+        />
       )
     },
     {
       title: "Daily Commitment",
-      icon: <Sparkles className="text-[#B19CD9]" />,
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500 italic">"What is your non-negotiable focus today?"</p>
-          <input
-            autoFocus
-            className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] transition-all"
-            placeholder="e.g. Completing the project plan..."
-            value={formData.focus_commitment}
-            onChange={(e) => setFormData({ ...formData, focus_commitment: e.target.value })}
-          />
-        </div>
+      subtitle: "What is your non-negotiable focus today?",
+      icon: <Sparkles size={24} className="text-[#B19CD9]" />,
+      field: (
+        <input
+          autoFocus
+          className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm"
+          placeholder="e.g. Completing the project plan..."
+          value={formData.focus_commitment}
+          onChange={(e) => setFormData({ ...formData, focus_commitment: e.target.value })}
+        />
       )
     },
     {
       title: "Financial Move",
-      icon: <DollarSign className="text-[#B19CD9]" />,
-      content: (
-        <div className="space-y-4">
-          <p className="text-sm text-gray-500 italic">"One tiny step toward financial freedom."</p>
-          <input
-            autoFocus
-            className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] transition-all"
-            placeholder="e.g. Transfer $10 to savings..."
-            value={formData.financial_action_text}
-            onChange={(e) => setFormData({ ...formData, financial_action_text: e.target.value })}
-          />
-        </div>
+      subtitle: "One tiny step toward financial freedom.",
+      icon: <DollarSign size={24} className="text-[#B19CD9]" />,
+      field: (
+        <input
+          autoFocus
+          className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm"
+          placeholder="e.g. Transfer $10 to savings..."
+          value={formData.financial_action_text}
+          onChange={(e) => setFormData({ ...formData, financial_action_text: e.target.value })}
+        />
       )
     },
     {
       title: "Self-Trust & Energy",
-      icon: <Heart className="text-[#B19CD9]" />,
-      content: (
-        <div className="space-y-6">
+      subtitle: "Ground yourself before the day begins.",
+      icon: <Heart size={24} className="text-[#B19CD9]" />,
+      field: (
+        <div className="space-y-5">
           <div className="space-y-2">
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-widest">Self-Trust Statement</p>
+            <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Self-Trust Statement</p>
             <input
-              className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9]"
+              className="w-full p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm"
               placeholder="e.g. I trust my ability to handle challenges..."
               value={formData.self_trust_statement}
               onChange={(e) => setFormData({ ...formData, self_trust_statement: e.target.value })}
             />
           </div>
-          <div className="space-y-4">
-            <p className="text-xs font-bold uppercase text-gray-400 tracking-widest">Energy Level ({formData.energy_level}/10)</p>
+          <div className="space-y-3">
+            <p className="text-[10px] font-bold uppercase text-gray-400 tracking-widest">Energy Level ({formData.energy_level}/10)</p>
             <input
               type="range"
               min="1"
@@ -113,62 +104,68 @@ const MorningAlignmentModal: React.FC<MorningAlignmentModalProps> = ({ isOpen, o
     }
   ];
 
-  const currentStep = steps[step - 1];
+  const currentStep = steps[step];
+  const isLast = step === steps.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg bg-white rounded-[32px] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
-        <div className="p-8">
-          <div className="flex justify-between items-center mb-10">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-[#E6D5F0] rounded-xl">{currentStep.icon}</div>
-              <h2 className="serif text-2xl font-bold text-[#7B68A6]">{currentStep.title}</h2>
-            </div>
-            <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-              <X size={20} className="text-gray-400" />
-            </button>
-          </div>
+    <div className="flex-1 flex flex-col bg-[#F8F7FC]" style={{ minHeight: '100%' }}>
+      {/* Header */}
+      <div className="bg-gradient-to-b from-[#7B68A6] to-[#9B8EC4] pt-12 pb-8 px-6 text-center">
+        <ButterflyIcon size={36} className="text-white/80 mx-auto mb-3" />
+        <h1 className="text-2xl serif font-bold text-white">
+          {step === 0 ? `Welcome${userName ? `, ${userName}` : ''}` : currentStep.title}
+        </h1>
+        <p className="text-white/70 text-sm italic mt-1">{currentStep.subtitle}</p>
+      </div>
 
-          <div className="min-h-[200px]">
-            {currentStep.content}
-          </div>
+      {/* Progress dots */}
+      <div className="flex justify-center gap-2 py-4">
+        {steps.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all ${i === step ? 'w-8 bg-[#B19CD9]' : 'w-2 bg-[#E6D5F0]'}`}
+          />
+        ))}
+      </div>
 
-          <div className="mt-12 flex items-center justify-between">
-            <div className="flex gap-1.5">
-              {steps.map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`h-1.5 rounded-full transition-all ${step === i + 1 ? 'w-8 bg-[#B19CD9]' : 'w-2 bg-[#E6D5F0]'}`} 
-                />
-              ))}
-            </div>
-            <div className="flex gap-3">
-              {step > 1 && (
-                <button 
-                  onClick={() => setStep(step - 1)}
-                  className="px-6 py-3 font-bold text-gray-400 hover:text-[#7B68A6] transition-colors"
-                >
-                  Back
-                </button>
-              )}
-              {step < steps.length ? (
-                <button 
-                  onClick={() => setStep(step + 1)}
-                  className="flex items-center gap-2 px-8 py-3 bg-[#B19CD9] text-white font-bold rounded-2xl hover:bg-[#7B68A6] transition-all shadow-lg shadow-[#B19CD9]/20"
-                >
-                  Next <ChevronRight size={18} />
-                </button>
-              ) : (
-                <button 
-                  onClick={handleSave}
-                  className="px-8 py-3 bg-[#7B68A6] text-white font-bold rounded-2xl hover:shadow-xl transition-all shadow-lg shadow-[#7B68A6]/20"
-                >
-                  Save & Start Day
-                </button>
-              )}
-            </div>
+      {/* Content */}
+      <div className="flex-1 px-6 py-4">
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#eee]">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-2 bg-[#E6D5F0] rounded-xl">{currentStep.icon}</div>
+            <h2 className="serif text-lg font-bold text-[#7B68A6]">{currentStep.title}</h2>
           </div>
+          {currentStep.field}
         </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="px-6 pb-8 flex items-center justify-between">
+        {step > 0 ? (
+          <button
+            onClick={() => setStep(step - 1)}
+            className="px-5 py-3 font-bold text-gray-400 text-sm"
+          >
+            Back
+          </button>
+        ) : (
+          <div />
+        )}
+        {isLast ? (
+          <button
+            onClick={handleComplete}
+            className="px-8 py-3 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-md text-sm"
+          >
+            Start My Day
+          </button>
+        ) : (
+          <button
+            onClick={() => setStep(step + 1)}
+            className="flex items-center gap-2 px-8 py-3 bg-[#B19CD9] text-white font-bold rounded-2xl shadow-md text-sm"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        )}
       </div>
     </div>
   );

@@ -17,7 +17,6 @@ import {
   Sunrise,
   Library as LibraryIcon,
   MessageCircle,
-  Database,
   User,
   Shield
 } from 'lucide-react';
@@ -65,7 +64,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const settingsItems = [
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'database', label: 'Database Explorer', icon: Database },
     { id: 'about', label: 'About', icon: Settings },
   ];
 

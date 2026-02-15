@@ -74,31 +74,31 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
   const totalSpent = totalFixed + totalVariableSpent;
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+    <div className="space-y-10">
+      <header className="sticky z-10 bg-[#F8F7FC] pb-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3" style={{ top: 'calc(33px + env(safe-area-inset-top))' }}>
         <div>
-          <h1 className="text-4xl font-bold mb-1">Financial Hub</h1>
-          <p className="text-gray-500">Manage your wealth with intention and grace.</p>
+          <h1 className="text-xl md:text-3xl font-bold mb-0.5">Financial Hub</h1>
+          <p className="text-gray-500 text-sm">Manage your wealth with intention and grace.</p>
         </div>
-        <div className="flex gap-3">
-          <button 
+        <div className="flex gap-2">
+          <button
             onClick={() => {
               setNewExpenseType('variable');
               setShowAddModal(true);
             }}
-            className="flex items-center gap-2 bg-[#B19CD9] text-white px-5 py-3 rounded-xl hover:bg-opacity-90 transition-all shadow-lg shadow-[#B19CD9]/20"
+            className="flex items-center gap-1.5 bg-[#B19CD9] text-white px-4 py-2 rounded-xl hover:bg-opacity-90 transition-all shadow-sm text-sm font-bold"
           >
-            <Plus size={20} />
+            <Plus size={16} />
             Add Expense
           </button>
           {isPremium && (
-            <button 
+            <button
               onClick={handleAIPriorities}
               disabled={loadingAI}
-              className="flex items-center gap-2 bg-[#7B68A6] text-white px-5 py-3 rounded-xl hover:bg-opacity-90 transition-all shadow-lg shadow-[#7B68A6]/20 disabled:opacity-50"
+              className="flex items-center gap-1.5 bg-[#7B68A6] text-white px-4 py-2 rounded-xl hover:bg-opacity-90 transition-all shadow-sm text-sm font-bold disabled:opacity-50"
             >
-              <BrainCircuit size={20} />
-              {loadingAI ? 'Analyzing...' : 'AI Weekly Priorities'}
+              <BrainCircuit size={16} />
+              {loadingAI ? 'Analyzing...' : 'AI Priorities'}
             </button>
           )}
         </div>
@@ -108,7 +108,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
         <div className="paper-card p-8 space-y-6">
           <div className="flex items-center gap-3 border-b border-[#eee] pb-4">
             <Wallet className="text-[#B19CD9]" />
-            <h2 className="text-xl font-bold">Monthly Snapshot</h2>
+            <h2 className="text-base font-bold">Monthly Snapshot</h2>
           </div>
           
           <div>
@@ -157,7 +157,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <ChartIcon className="text-[#B19CD9]" />
-              <h2 className="text-xl font-bold">Expense Breakdown</h2>
+              <h2 className="text-base font-bold">Expense Breakdown</h2>
             </div>
           </div>
 
@@ -280,7 +280,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <CreditCard className="text-[#B19CD9]" />
-              <h2 className="text-xl font-bold">Debt Payoff Tracker</h2>
+              <h2 className="text-base font-bold">Debt Payoff Tracker</h2>
             </div>
             <button 
               onClick={() => {

@@ -15,6 +15,7 @@ import {
   Check,
   Type
 } from 'lucide-react';
+import MicButton from '../components/MicButton';
 import { generateVisionImage, isAiEnabled } from '../services/geminiService';
 
 // ─── Local Gallery (replaces Unsplash) ──────────────────────────────────────
@@ -183,23 +184,23 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
     : LOCAL_GALLERY.filter(img => img.category === activeCategory);
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-700 pb-24">
+    <div className="space-y-6 pb-24">
       {/* ─── Header ────────────────────────────────────────────────────── */}
-      <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <header className="sticky z-10 bg-[#F8F7FC] pb-2 flex flex-col md:flex-row items-start md:items-center justify-between gap-3" style={{ top: 'calc(33px + env(safe-area-inset-top))' }}>
+        <div className="flex items-center gap-2">
           <div>
-            <h1 className="text-3xl md:text-4xl font-bold serif">Vision Board</h1>
-            <p className="text-gray-500 italic text-sm">"manifesting my dream life ✨"</p>
+            <h1 className="text-xl md:text-3xl font-bold serif">Vision Board</h1>
+            <p className="text-gray-500 italic text-xs">"manifesting my dream life"</p>
           </div>
           <button
             onClick={() => setShowGuide(true)}
-            className="p-2 rounded-full bg-[#F8F7FC] text-[#7B68A6] hover:bg-[#E6D5F0] transition-colors"
+            className="p-1.5 rounded-full bg-[#F8F7FC] text-[#7B68A6] hover:bg-[#E6D5F0] transition-colors"
             title="How to use"
           >
-            <HelpCircle size={20} />
+            <HelpCircle size={16} />
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-1.5">
           <input
             type="file"
             className="hidden"
@@ -209,21 +210,21 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
           />
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-xl hover:bg-[#F8F7FC] transition-all shadow-sm text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#E6D5F0] text-[#7B68A6] font-bold rounded-lg hover:bg-[#F8F7FC] transition-all shadow-sm text-xs"
           >
-            <Upload size={16} /> Upload
+            <Upload size={14} /> Upload
           </button>
           <button
             onClick={() => setShowAiModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#7B68A6] to-[#B19CD9] text-white font-bold rounded-xl hover:opacity-90 transition-all shadow-md text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-[#7B68A6] to-[#B19CD9] text-white font-bold rounded-lg hover:opacity-90 transition-all shadow-sm text-xs"
           >
-            <Wand2 size={16} /> Magic Manifest
+            <Wand2 size={14} /> Manifest
           </button>
           <button
             onClick={() => setShowGallery(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#B19CD9] text-white font-bold rounded-xl hover:bg-[#7B68A6] transition-all shadow-md text-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#B19CD9] text-white font-bold rounded-lg hover:bg-[#7B68A6] transition-all shadow-sm text-xs"
           >
-            <ImageIcon size={16} /> Gallery
+            <ImageIcon size={14} /> Gallery
           </button>
         </div>
       </header>
@@ -245,21 +246,21 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
       </div>
 
       {/* ─── Main Board Area ───────────────────────────────────────────── */}
-      <div className="paper-card p-4 md:p-8 min-h-[500px] bg-white border-[#eee] relative overflow-hidden">
+      <div className="paper-card p-3 md:p-8 min-h-[400px] bg-white border-[#eee] relative overflow-hidden">
         {data.visionBoard.images.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6 relative z-10">
             {data.visionBoard.images.map((img, i) => (
               <div
                 key={i}
-                className="group relative aspect-[3/4] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer border border-[#eee]"
+                className="group relative aspect-[4/5] rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer border border-[#eee]"
                 onClick={() => openTextOverlay(i)}
               >
-                <img src={img} alt="Vision" className="w-full h-full object-cover grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
+                <img src={img} alt="Vision" className="w-full h-full object-cover object-center grayscale-[20%] group-hover:grayscale-0 transition-all duration-500" />
 
                 {/* Text overlay */}
                 {data.visionBoard.goals[i] && (
-                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
-                    <p className="text-white text-xs md:text-sm font-bold drop-shadow-lg">{data.visionBoard.goals[i]}</p>
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent px-3 pb-3 pt-8">
+                    <p className="text-white text-[11px] md:text-sm font-bold drop-shadow-lg leading-snug break-words">{data.visionBoard.goals[i]}</p>
                   </div>
                 )}
 
@@ -369,12 +370,17 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
               <div className="aspect-video rounded-xl overflow-hidden border border-[#eee]">
                 <img src={data.visionBoard.images[textEditIndex]} alt="Selected" className="w-full h-full object-cover" />
               </div>
-              <textarea
-                className="w-full h-24 p-4 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm resize-none"
-                placeholder="Write your affirmation or goal..."
-                value={textDraft}
-                onChange={(e) => setTextDraft(e.target.value)}
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full h-24 p-4 pr-12 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl outline-none focus:ring-2 focus:ring-[#B19CD9] text-sm resize-none"
+                  placeholder="Write your affirmation or goal..."
+                  value={textDraft}
+                  onChange={(e) => setTextDraft(e.target.value)}
+                />
+                <div className="absolute top-3 right-3">
+                  <MicButton onTranscript={(text) => setTextDraft(prev => prev ? prev + ' ' + text : text)} />
+                </div>
+              </div>
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowTextModal(false)}
@@ -530,7 +536,7 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
       {/* ─── Gallery Modal with Category Tabs ──────────────────────────── */}
       {showGallery && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col max-h-[85%]">
             <div className="p-6 md:p-8 border-b border-[#eee] flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="p-3 bg-[#E6D5F0] rounded-2xl"><Sparkles className="text-[#7B68A6]" /></div>
@@ -599,8 +605,14 @@ const VisionBoard: React.FC<{ data: YearData; updateData: (d: YearData) => void 
               </div>
             </div>
 
-            <div className="p-6 md:p-8 bg-[#F8F7FC] border-t border-[#eee] text-center">
-              <p className="text-sm text-gray-500 italic">"What you focus on, you attract. Dream big, {data.year} is yours."</p>
+            <div className="p-6 md:p-8 bg-[#F8F7FC] border-t border-[#eee] space-y-4">
+              <p className="text-sm text-gray-500 italic text-center">"What you focus on, you attract. Dream big, {data.year} is yours."</p>
+              <button
+                onClick={() => setShowGallery(false)}
+                className="w-full py-4 bg-[#7B68A6] text-white font-bold rounded-2xl shadow-lg hover:bg-[#B19CD9] transition-all flex items-center justify-center gap-2"
+              >
+                <Check size={18} /> Done
+              </button>
             </div>
           </div>
         </div>

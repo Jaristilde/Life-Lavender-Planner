@@ -120,7 +120,7 @@ const WellnessTracker: React.FC<{ data: YearData; updateData: (d: YearData) => v
   };
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-10">
       <header>
         <h1 className="text-4xl font-bold mb-1">Wellness Tracker</h1>
         <p className="text-gray-500 italic">"Pour into yourself so you can overflow into the world."</p>

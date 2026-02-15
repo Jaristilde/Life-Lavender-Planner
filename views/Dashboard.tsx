@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { YearData } from '../types';
 import { DEFAULT_DAILY_METRICS } from '../constants';
-import { Sparkles, TrendingUp, CheckCircle, BookOpen, CalendarCheck, Sunrise, Droplets } from 'lucide-react';
+import { Sparkles, TrendingUp, CheckCircle, BookOpen, CalendarCheck, Sunrise, Droplets, Heart, X } from 'lucide-react';
 import ButterflyIcon from '../components/ButterflyIcon';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { generatePersonalizedAffirmations } from '../services/geminiService';
@@ -20,6 +20,7 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userName, mood, feeling }) => {
   const [personalAffirmations, setPersonalAffirmations] = useState<string[]>([]);
   const [greeting, setGreeting] = useState('');
+  const [gratitudeDismissed, setGratitudeDismissed] = useState(false);
 
   const today = new Date().toISOString().split('T')[0];
   const todayMetrics = data?.dailyMetrics?.[today] || DEFAULT_DAILY_METRICS(today);
@@ -94,80 +95,117 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+    <div className="space-y-8">
+      <header className="sticky z-10 bg-[#F8F7FC] pb-2 flex flex-col md:flex-row md:items-end justify-between gap-3" style={{ top: 'calc(33px + env(safe-area-inset-top))' }}>
         <div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-2">{greeting}, {userName}</h1>
-          <p className="text-[#7B68A6] italic text-lg font-light">"Your blueprint for abundance and mindfulness."</p>
+          <h1 className="text-xl md:text-3xl font-bold mb-0.5">{greeting}, {userName}</h1>
+          <p className="text-[#7B68A6] italic text-sm font-light">"Your blueprint for abundance and mindfulness."</p>
         </div>
-        <div className="paper-card p-6 flex items-center gap-4 border-l-8 border-[#B19CD9]">
-          <div className="p-2 bg-[#F8F7FC] rounded-full"><ButterflyIcon size={24} className="text-[#B19CD9]" /></div>
+        <div className="paper-card p-3 flex items-center gap-3 border-l-4 border-[#B19CD9]">
+          <div className="p-1.5 bg-[#F8F7FC] rounded-full"><ButterflyIcon size={18} className="text-[#B19CD9]" /></div>
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Core Intention</p>
-            <p className="text-lg font-bold serif italic text-[#7B68A6]">{blueprint?.topIntentions?.[0] || 'Clarity'}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Core Intention</p>
+            <p className="text-sm font-bold serif italic text-[#7B68A6]">{blueprint?.topIntentions?.[0] || 'Clarity'}</p>
           </div>
         </div>
       </header>
 
-      <div className="paper-card p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 border-2 border-[#B19CD9]/30 relative overflow-hidden group">
-        <Sparkles size={120} className="absolute -right-10 -bottom-10 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
-        <h3 className="text-xs font-bold uppercase tracking-[0.3em] text-[#7B68A6] mb-6 flex items-center gap-2">
+      {/* Daily Gratitude Prompt — shows when today's gratitude is empty */}
+      {!gratitudeDismissed && !(todayMetrics.gratitude || []).some((g: string) => g.trim()) && (
+        <div className="paper-card p-5 border-l-4 border-[#B19CD9] bg-white">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Heart size={18} className="text-[#B19CD9]" />
+              <h3 className="text-sm font-bold text-[#7B68A6]">What are you grateful for today?</h3>
+            </div>
+            <button onClick={() => setGratitudeDismissed(true)} className="p-1 text-gray-300 hover:text-gray-500">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="space-y-2">
+            {[0, 1, 2].map(i => (
+              <input
+                key={i}
+                type="text"
+                className="w-full text-sm py-2 px-3 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl outline-none focus:ring-2 focus:ring-[#B19CD9]"
+                placeholder={['I am grateful for...', 'I appreciate...', 'I am thankful for...'][i]}
+                value={(todayMetrics.gratitude || ['', '', ''])[i] || ''}
+                onChange={(e) => {
+                  const newGrat = [...(todayMetrics.gratitude || ['', '', ''])];
+                  newGrat[i] = e.target.value;
+                  updateData({
+                    ...data,
+                    dailyMetrics: {
+                      ...(data?.dailyMetrics || {}),
+                      [today]: { ...todayMetrics, gratitude: newGrat }
+                    }
+                  });
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="paper-card p-5 md:p-8 bg-gradient-to-r from-[#B19CD9]/10 to-[#7B68A6]/10 border-2 border-[#B19CD9]/30 relative overflow-hidden group">
+        <Sparkles size={80} className="absolute -right-6 -bottom-6 text-[#7B68A6]/5 group-hover:scale-110 transition-transform duration-1000" />
+        <h3 className="text-[11px] font-bold uppercase tracking-[0.15em] text-[#7B68A6] mb-3 flex items-center gap-2">
            Today's Intention Focus
         </h3>
-        <p className="text-2xl md:text-3xl serif italic text-[#3D2D7C] leading-tight relative z-10 max-w-3xl">
+        <p className="text-lg md:text-2xl serif italic text-[#3D2D7C] leading-snug relative z-10 max-w-3xl">
           "<TextReveal text={personalAffirmations?.[0] || 'I am focused on creating a stable and rewarding financial future.'} speed={0.02} />"
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="paper-card p-6 bg-gradient-to-br from-[#7B68A6]/5 to-[#B19CD9]/5 border-l-8 border-[#7B68A6] cursor-pointer hover:shadow-lg transition-all" onClick={() => setView('monthlyReset')}>
-           <div className="flex items-center gap-3 mb-2">
-             <CalendarCheck className="text-[#7B68A6]" size={18} />
-             <h3 className="font-bold text-gray-500 uppercase text-[10px] tracking-wider">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="paper-card p-4 md:p-6 bg-gradient-to-br from-[#7B68A6]/5 to-[#B19CD9]/5 border-l-4 border-[#7B68A6] cursor-pointer hover:shadow-lg transition-all col-span-2 lg:col-span-1" onClick={() => setView('monthlyReset')}>
+           <div className="flex items-center gap-2 mb-1">
+             <CalendarCheck className="text-[#7B68A6]" size={16} />
+             <h3 className="font-bold text-gray-500 uppercase text-[10px] tracking-[0.5px]">
                {currentMonthReset?.completedAt ? 'Month Reflection' : 'Monthly Ritual'}
              </h3>
            </div>
-           <p className="text-lg font-bold text-[#7B68A6]">
+           <p className="text-sm font-bold text-[#7B68A6]">
              {currentMonthReset?.completedAt ? `${months[new Date().getMonth()]} Reset Complete` : `Time for ${months[new Date().getMonth()]} Reset`}
            </p>
-           <button className="text-xs font-bold text-[#B19CD9] mt-2 flex items-center gap-1">
+           <button className="text-[11px] font-bold text-[#B19CD9] mt-1 flex items-center gap-1">
              {currentMonthReset?.completedAt ? 'Review your insights' : 'Start your ritual now'} →
            </button>
         </div>
 
-        <div className="paper-card p-6 bg-gradient-to-br from-white to-[#F8F7FC]">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-[#E6D5F0] rounded-lg text-[#7B68A6]"><TrendingUp size={20} /></div>
-            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Financial Health</h3>
+        <div className="paper-card p-4 md:p-6 bg-gradient-to-br from-white to-[#F8F7FC]">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 bg-[#E6D5F0] rounded-lg text-[#7B68A6]"><TrendingUp size={16} /></div>
+            <h3 className="font-bold text-gray-500 uppercase text-[10px] tracking-[0.5px]">Financial Health</h3>
           </div>
-          <AnimatedCounter value={financialSummary?.income ?? 0} prefix="$" className="text-2xl font-bold" />
-          <p className="text-sm text-gray-500 mt-1">Total Monthly Income</p>
+          <AnimatedCounter value={financialSummary?.income ?? 0} prefix="$" className="text-xl font-bold" />
+          <p className="text-xs text-gray-500 mt-1">Total Monthly Income</p>
         </div>
 
-        <div className="paper-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-[#FFEEDD] rounded-lg text-[#FF9933]"><CheckCircle size={20} /></div>
-            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Daily Priorities</h3>
+        <div className="paper-card p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 bg-[#FFEEDD] rounded-lg text-[#FF9933]"><CheckCircle size={16} /></div>
+            <h3 className="font-bold text-gray-500 uppercase text-[10px] tracking-[0.5px]">Daily Priorities</h3>
           </div>
-          <p className="text-2xl font-bold">{completedPriorities} / {totalPriorities || priorities.length}</p>
-          <p className="text-sm text-gray-500 mt-1">Completed Today</p>
+          <p className="text-xl font-bold">{completedPriorities} / {totalPriorities || priorities.length}</p>
+          <p className="text-xs text-gray-500 mt-1">Completed Today</p>
         </div>
 
-        <div className="paper-card p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-[#D1F7E9] rounded-lg text-[#10B981]"><Sparkles size={20} /></div>
-            <h3 className="font-bold text-gray-500 uppercase text-xs tracking-wider">Simplify Streak</h3>
+        <div className="paper-card p-4 md:p-6">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-1.5 bg-[#D1F7E9] rounded-lg text-[#10B981]"><Sparkles size={16} /></div>
+            <h3 className="font-bold text-gray-500 uppercase text-[10px] tracking-[0.5px]">Simplify Streak</h3>
           </div>
-          <AnimatedCounter value={simplifyProgress} suffix="%" className="text-2xl font-bold" />
-          <p className="text-sm text-gray-500 mt-1">Challenge Progress</p>
+          <AnimatedCounter value={simplifyProgress} suffix="%" className="text-xl font-bold" />
+          <p className="text-xs text-gray-500 mt-1">Challenge Progress</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="paper-card p-8">
-            <h2 className="text-2xl font-bold mb-6">Yearly Financial Pulse</h2>
-            <div className="h-80 w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-8">
+        <div className="lg:col-span-2 space-y-4 md:space-y-8">
+          <div className="paper-card p-5 md:p-8">
+            <h2 className="text-base md:text-xl font-bold mb-4">Yearly Financial Pulse</h2>
+            <div className="h-56 md:h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
@@ -184,14 +222,14 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
             </div>
           </div>
 
-          <div className="paper-card p-8 border-t-8 border-[#7B68A6] flex flex-col md:flex-row items-center gap-8 bg-gradient-to-br from-white to-[#F8F7FC]">
-            <div className="p-5 bg-[#E6D5F0] rounded-3xl text-[#7B68A6]">
-              <BookOpen size={48} />
+          <div className="paper-card p-5 md:p-8 border-t-4 border-[#7B68A6] flex flex-col md:flex-row items-center gap-4 md:gap-8 bg-gradient-to-br from-white to-[#F8F7FC]">
+            <div className="p-3 bg-[#E6D5F0] rounded-2xl text-[#7B68A6]">
+              <BookOpen size={32} />
             </div>
-            <div className="flex-1 space-y-4 text-center md:text-left">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="serif font-bold text-2xl text-[#7B68A6]">Your Money Reset Journey</h3>
-                <span className="text-sm font-bold text-gray-400">
+            <div className="flex-1 space-y-3 text-center md:text-left">
+              <div className="flex items-center justify-between mb-1">
+                <h3 className="serif font-bold text-base md:text-xl text-[#7B68A6]">Your Money Reset Journey</h3>
+                <span className="text-xs font-bold text-gray-400">
                   {((workbook?.current_page ?? 0) + 1)} of 10
                 </span>
               </div>
@@ -203,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
               </div>
               <button
                 onClick={() => setView('workbook')}
-                className="inline-flex items-center gap-2 px-6 py-2 bg-[#7B68A6] text-white font-bold rounded-xl hover:bg-[#B19CD9] transition-all shadow-md"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[#7B68A6] text-white font-bold rounded-xl hover:bg-[#B19CD9] transition-all shadow-md text-sm"
               >
                 {workbook?.completed_at ? 'Review Money Reset →' : workbook?.started_at ? 'Continue Money Reset →' : 'Start Your Money Reset →'}
               </button>
@@ -212,8 +250,8 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
         </div>
 
         {/* Morning Ritual Status — reads from today's dailyMetrics */}
-        <div className="paper-card p-8 space-y-6">
-          <h2 className="text-2xl font-bold mb-2">My Morning Ritual</h2>
+        <div className="paper-card p-5 md:p-8 space-y-4">
+          <h2 className="text-base md:text-xl font-bold mb-1">My Morning Ritual</h2>
 
           {/* Ritual status */}
           <div className={`p-4 rounded-2xl flex items-center gap-3 ${todayMetrics.morning_ritual_completed ? 'bg-[#D1F7E9] text-[#10B981]' : 'bg-[#F8F7FC] text-gray-400'}`}>

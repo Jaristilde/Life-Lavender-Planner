@@ -6,6 +6,7 @@ import {
   Sunrise, Trash2, Plus, Coffee, DollarSign
 } from 'lucide-react';
 import { generatePersonalizedAffirmations } from '../services/geminiService';
+import MicButton from '../components/MicButton';
 
 interface MorningResetProps {
   data: YearData;
@@ -121,7 +122,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
   const sectionTitles = ['Intention', 'Mood', 'Money', 'Priorities', 'Complete'];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#F8F7FC] to-[#E6D5F0]/20 pb-32 animate-in fade-in duration-700">
+    <div className="flex-1 bg-gradient-to-b from-[#F8F7FC] to-[#E6D5F0]/20 pb-32">
       <div className="max-w-3xl mx-auto pt-8 px-6 space-y-10">
         {/* Header */}
         <header className="flex justify-between items-start">
@@ -179,12 +180,17 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
             <section className="paper-card p-10 bg-[#7B68A6] text-white space-y-8">
               <div className="space-y-2">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-white/60">My intention for today:</label>
-                <textarea
-                  className="w-full bg-transparent border-b border-white/20 outline-none text-2xl serif italic placeholder:text-white/20 resize-none h-20"
-                  placeholder="I am walking with confidence..."
-                  value={metrics.daily_intention || ''}
-                  onChange={(e) => updateMetrics({ daily_intention: e.target.value })}
-                />
+                <div className="relative">
+                  <textarea
+                    className="w-full bg-transparent border-b border-white/20 outline-none text-2xl serif italic placeholder:text-white/20 resize-none h-20 pr-12"
+                    placeholder="I am walking with confidence..."
+                    value={metrics.daily_intention || ''}
+                    onChange={(e) => updateMetrics({ daily_intention: e.target.value })}
+                  />
+                  <div className="absolute right-0 top-0">
+                    <MicButton onTranscript={(text) => updateMetrics({ daily_intention: (metrics.daily_intention ? metrics.daily_intention + ' ' : '') + text })} className="text-white/40 hover:text-white hover:bg-white/20" />
+                  </div>
+                </div>
               </div>
               <div className="pt-4 border-t border-white/10 flex items-start gap-4">
                 <Sparkles className="shrink-0 text-[#D4AF37]" size={20} />
@@ -278,21 +284,31 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
               </div>
               <div className="paper-card p-6 bg-white flex flex-col items-center text-center md:col-span-2">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">One Financial Intention</span>
-                <input
-                  className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic"
-                  placeholder="e.g. Bringing my lunch today"
-                  value={metrics.financial_intention || ''}
-                  onChange={(e) => updateMetrics({ financial_intention: e.target.value })}
-                />
+                <div className="relative w-full">
+                  <input
+                    className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic pr-10"
+                    placeholder="e.g. Bringing my lunch today"
+                    value={metrics.financial_intention || ''}
+                    onChange={(e) => updateMetrics({ financial_intention: e.target.value })}
+                  />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                    <MicButton onTranscript={(text) => updateMetrics({ financial_intention: (metrics.financial_intention ? metrics.financial_intention + ' ' : '') + text })} />
+                  </div>
+                </div>
               </div>
               <div className="paper-card p-6 bg-white flex flex-col items-center text-center md:col-span-3">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-4">I'm grateful for (Money/Abundance)</span>
-                <input
-                  className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic"
-                  placeholder="e.g. My stable income"
-                  value={metrics.financial_gratitude || ''}
-                  onChange={(e) => updateMetrics({ financial_gratitude: e.target.value })}
-                />
+                <div className="relative w-full">
+                  <input
+                    className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic pr-10"
+                    placeholder="e.g. My stable income"
+                    value={metrics.financial_gratitude || ''}
+                    onChange={(e) => updateMetrics({ financial_gratitude: e.target.value })}
+                  />
+                  <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                    <MicButton onTranscript={(text) => updateMetrics({ financial_gratitude: (metrics.financial_gratitude ? metrics.financial_gratitude + ' ' : '') + text })} />
+                  </div>
+                </div>
               </div>
             </div>
 

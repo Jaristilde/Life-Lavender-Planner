@@ -2,6 +2,7 @@
 import React from 'react';
 import { YearData } from '../types';
 import { History, Award, Heart, BookOpen, Download } from 'lucide-react';
+import MicButton from '../components/MicButton';
 
 const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void }> = ({ data, updateData }) => {
   const updateReflections = (newR: Partial<typeof data.reflections>) => {
@@ -9,7 +10,7 @@ const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void 
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 animate-in fade-in duration-700">
+    <div className="max-w-4xl mx-auto space-y-10">
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold mb-1">Yearly Reflections</h1>
@@ -26,12 +27,17 @@ const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void 
             <Award className="text-[#D4AF37]" size={32} />
             <h2 className="text-3xl serif font-bold">Top Achievements</h2>
           </div>
-          <textarea 
-            className="w-full min-h-[150px] p-6 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
-            placeholder="What are the wins that made you proud this year?"
-            value={data.reflections.lessons}
-            onChange={(e) => updateReflections({ lessons: e.target.value })}
-          />
+          <div className="relative">
+            <textarea
+              className="w-full min-h-[150px] p-6 pr-14 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
+              placeholder="What are the wins that made you proud this year?"
+              value={data.reflections.lessons}
+              onChange={(e) => updateReflections({ lessons: e.target.value })}
+            />
+            <div className="absolute right-4 top-4">
+              <MicButton onTranscript={(text) => updateReflections({ lessons: (data.reflections.lessons ? data.reflections.lessons + ' ' : '') + text })} />
+            </div>
+          </div>
         </section>
 
         <section className="paper-card p-10">
@@ -39,12 +45,17 @@ const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void 
             <Heart className="text-[#B19CD9]" size={32} />
             <h2 className="text-3xl serif font-bold">Gratitude Journal</h2>
           </div>
-          <textarea 
-            className="w-full min-h-[150px] p-6 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
-            placeholder="Who and what are you most grateful for?"
-            value={data.reflections.gratitude}
-            onChange={(e) => updateReflections({ gratitude: e.target.value })}
-          />
+          <div className="relative">
+            <textarea
+              className="w-full min-h-[150px] p-6 pr-14 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
+              placeholder="Who and what are you most grateful for?"
+              value={data.reflections.gratitude}
+              onChange={(e) => updateReflections({ gratitude: e.target.value })}
+            />
+            <div className="absolute right-4 top-4">
+              <MicButton onTranscript={(text) => updateReflections({ gratitude: (data.reflections.gratitude ? data.reflections.gratitude + ' ' : '') + text })} />
+            </div>
+          </div>
         </section>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

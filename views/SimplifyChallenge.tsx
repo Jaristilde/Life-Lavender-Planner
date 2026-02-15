@@ -16,9 +16,9 @@ const SimplifyChallenge: React.FC<{ data: YearData; updateData: (d: YearData) =>
   const progress = data.simplifyChallenge.filter(c => c.completed).length;
 
   return (
-    <div className="max-w-5xl mx-auto space-y-0 animate-in fade-in duration-700">
+    <div className="max-w-5xl mx-auto space-y-0">
       {/* Banner Image */}
-      <div className="relative w-full h-48 md:h-64 overflow-hidden rounded-t-2xl">
+      <div className="relative w-full overflow-hidden rounded-t-2xl" style={{ height: '200px' }}>
         <img
           src="/butterfly1.png"
           alt="Lavender Butterfly"

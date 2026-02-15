@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BUG 1 — Prevent iOS auto-zoom on input focus (requires >= 16px) */
+input, textarea, select {
+  font-size: 16px !important;
+}
+
+/* BUG 3 — Minimum 44px tap targets for icon buttons */
+button:has(svg) {
+  min-width: 44px;
+  min-height: 44px;
+}

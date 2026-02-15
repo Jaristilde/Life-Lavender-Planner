@@ -235,7 +235,7 @@ const OnboardingBlueprint: React.FC<Props> = ({ onComplete }) => {
   const currentStep = steps[step];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F8F7FC] p-4">
+    <div className="flex-1 flex items-center justify-center bg-[#F8F7FC] p-4">
       <div className="w-full max-w-2xl bg-white rounded-[40px] shadow-2xl border border-[#eee] overflow-hidden animate-in fade-in duration-1000">
         <div className="relative p-10">
           {step > 0 && (

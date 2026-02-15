@@ -37,7 +37,7 @@ const About: React.FC<AboutProps> = ({ userName }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-white animate-in fade-in duration-700 pb-20">
+    <div className="flex-1 bg-white pb-20">
       {/* Header Section */}
       <div className="w-full bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] pt-20 pb-24 px-6 text-center">
         <div className="flex justify-center mb-8">

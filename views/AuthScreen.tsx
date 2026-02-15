@@ -69,9 +69,9 @@ const AuthScreen: React.FC = () => {
   // Signup success screen
   if (signupSuccess) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-8 animate-in fade-in duration-1000">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-10 rounded-[40px] shadow-2xl text-center space-y-6">
+      <div className="flex-1 bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8 ">
+          <div className="bg-white/15 border border-white/20 p-10 rounded-[40px] shadow-2xl text-center space-y-6">
             <div className="inline-block p-4 bg-[#10B981]/20 rounded-full">
               <CheckCircle2 size={48} className="text-[#10B981]" />
             </div>
@@ -94,9 +94,9 @@ const AuthScreen: React.FC = () => {
   // Password reset sent screen
   if (resetSent) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6">
-        <div className="w-full max-w-md space-y-8 animate-in fade-in duration-1000">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-10 rounded-[40px] shadow-2xl text-center space-y-6">
+      <div className="flex-1 bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-4">
+        <div className="w-full max-w-md space-y-8 ">
+          <div className="bg-white/15 border border-white/20 p-10 rounded-[40px] shadow-2xl text-center space-y-6">
             <div className="inline-block p-4 bg-[#3B82F6]/20 rounded-full">
               <Mail size={48} className="text-[#3B82F6]" />
             </div>
@@ -117,17 +117,17 @@ const AuthScreen: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-6">
-      <div className="w-full max-w-md space-y-8 animate-in fade-in duration-1000">
+    <div className="flex-1 bg-gradient-to-b from-[#7B68A6] via-[#9B8EC4] to-[#B19CD9] flex items-center justify-center p-4">
+      <div className="w-full max-w-md space-y-8 ">
         <div className="text-center space-y-4">
-          <div className="inline-block p-4 bg-white/10 rounded-[32px] backdrop-blur-md mb-2">
+          <div className="inline-block p-4 bg-white/15 rounded-[32px] mb-2">
             <ButterflyIcon size={48} className="text-white" />
           </div>
           <h1 className="text-4xl serif font-bold text-white tracking-tight">Lavender Life Planner</h1>
           <p className="text-white/80 italic serif text-lg px-4">"Your life is your biggest project. Plan it beautifully."</p>
         </div>
 
-        <div className="bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-[40px] shadow-2xl space-y-6">
+        <div className="bg-white/15 border border-white/20 p-8 rounded-[40px] shadow-2xl space-y-6">
           {view === 'forgot' ? (
             <>
               <div className="flex items-center gap-3">

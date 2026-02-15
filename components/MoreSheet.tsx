@@ -16,10 +16,11 @@ import {
   Heart,
   Library as LibraryIcon,
   User,
-  Database,
   MessageCircle,
-  Shield
+  Shield,
+  LogOut
 } from 'lucide-react';
+import { authService } from '../services/authService';
 import ButterflyIcon from './ButterflyIcon';
 
 interface MoreSheetProps {
@@ -72,7 +73,6 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
     { id: 'reflections', label: 'Reflections', icon: History },
     { id: 'library', label: 'Library', icon: LibraryIcon },
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'database', label: 'Database Explorer', icon: Database },
     { id: 'about', label: 'About', icon: Info },
   ];
 
@@ -121,7 +121,7 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
         </div>
 
         {/* Nav Grid */}
-        <div className="grid grid-cols-2 gap-4 max-h-[40vh] overflow-y-auto custom-scrollbar">
+        <div className="grid grid-cols-2 gap-4 max-h-[300px] overflow-y-auto custom-scrollbar">
           {moreItems.map(item => (
             <button
               key={item.id}
@@ -165,6 +165,16 @@ const MoreSheet: React.FC<MoreSheetProps> = ({
               <span className="font-bold text-sm">Account Settings</span>
             </div>
             <ChevronRight size={18} />
+          </button>
+          <button
+            onClick={async () => {
+              onClose();
+              await authService.signOut();
+            }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 border border-red-200 text-red-500 font-bold rounded-xl hover:bg-red-100 transition-all text-sm"
+          >
+            <LogOut size={18} />
+            Sign Out
           </button>
         </div>
       </div>

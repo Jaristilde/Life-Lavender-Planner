@@ -2,19 +2,20 @@
 import React, { useState, useEffect } from 'react';
 import { YearData, MonthlyResetData } from '../types';
 import { DEFAULT_MONTHLY_RESET } from '../constants';
-import { 
-  ChevronRight, 
-  CalendarCheck, 
-  Sparkles, 
-  Trash2, 
-  Plus, 
-  CheckCircle2, 
-  Save, 
-  BrainCircuit, 
+import {
+  ChevronRight,
+  CalendarCheck,
+  Sparkles,
+  Trash2,
+  Plus,
+  CheckCircle2,
+  Save,
+  BrainCircuit,
   DollarSign,
   X
 } from 'lucide-react';
 import { generateMonthlyInsight } from '../services/geminiService';
+import MicButton from '../components/MicButton';
 
 interface Props {
   data: YearData;
@@ -82,7 +83,7 @@ const MonthlyReset: React.FC<Props> = ({ data, updateData, isPremium, userName }
   const bannerAbbr = selectedMonth.slice(0, 3).toUpperCase();
 
   return (
-    <div className="max-w-5xl mx-auto pb-32 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="max-w-5xl mx-auto pb-32 space-y-12">
       <header className="flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-4">
           <div className="p-3 bg-[#E6D5F0] rounded-2xl"><CalendarCheck className="text-[#7B68A6]" /></div>
@@ -101,7 +102,7 @@ const MonthlyReset: React.FC<Props> = ({ data, updateData, isPremium, userName }
       </header>
 
       {/* Month Banner */}
-      <div className="relative h-64 rounded-[40px] overflow-hidden bg-gradient-to-r from-[#7B68A6] to-[#6B5FCF] flex items-center justify-center shadow-xl">
+      <div className="relative rounded-[40px] overflow-hidden bg-gradient-to-r from-[#7B68A6] to-[#6B5FCF] flex items-center justify-center shadow-xl" style={{ height: '200px' }}>
          <div className="absolute inset-0 flex items-center justify-center opacity-10 select-none">
             <span className="text-[180px] font-black tracking-tighter text-white">{bannerAbbr}</span>
          </div>
@@ -160,39 +161,59 @@ const MonthlyReset: React.FC<Props> = ({ data, updateData, isPremium, userName }
           <div className="p-8 space-y-8">
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500">What I am grateful for</label>
-              <textarea 
-                className="w-full h-24 p-4 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
-                placeholder="🌈 I'm grateful for..."
-                value={reset.reflection.grateful}
-                onChange={(e) => updateReset({ reflection: { ...reset.reflection, grateful: e.target.value } })}
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full h-24 p-4 pr-12 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
+                  placeholder="🌈 I'm grateful for..."
+                  value={reset.reflection.grateful}
+                  onChange={(e) => updateReset({ reflection: { ...reset.reflection, grateful: e.target.value } })}
+                />
+                <div className="absolute right-3 top-3">
+                  <MicButton onTranscript={(text) => updateReset({ reflection: { ...reset.reflection, grateful: (reset.reflection.grateful ? reset.reflection.grateful + ' ' : '') + text } })} />
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500">What felt heavy or draining</label>
-              <textarea 
-                className="w-full h-24 p-4 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
-                placeholder="🌑 This month, I felt weighed down by..."
-                value={reset.reflection.heavy}
-                onChange={(e) => updateReset({ reflection: { ...reset.reflection, heavy: e.target.value } })}
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full h-24 p-4 pr-12 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
+                  placeholder="🌑 This month, I felt weighed down by..."
+                  value={reset.reflection.heavy}
+                  onChange={(e) => updateReset({ reflection: { ...reset.reflection, heavy: e.target.value } })}
+                />
+                <div className="absolute right-3 top-3">
+                  <MicButton onTranscript={(text) => updateReset({ reflection: { ...reset.reflection, heavy: (reset.reflection.heavy ? reset.reflection.heavy + ' ' : '') + text } })} />
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500">What am I proud of</label>
-              <textarea 
-                className="w-full h-24 p-4 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
-                placeholder="📌 Celebrating these wins..."
-                value={reset.reflection.proud}
-                onChange={(e) => updateReset({ reflection: { ...reset.reflection, proud: e.target.value } })}
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full h-24 p-4 pr-12 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
+                  placeholder="📌 Celebrating these wins..."
+                  value={reset.reflection.proud}
+                  onChange={(e) => updateReset({ reflection: { ...reset.reflection, proud: e.target.value } })}
+                />
+                <div className="absolute right-3 top-3">
+                  <MicButton onTranscript={(text) => updateReset({ reflection: { ...reset.reflection, proud: (reset.reflection.proud ? reset.reflection.proud + ' ' : '') + text } })} />
+                </div>
+              </div>
             </div>
             <div className="space-y-2">
               <label className="text-xs font-bold text-gray-500">What do I want less of next month</label>
-              <textarea 
-                className="w-full h-24 p-4 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
-                placeholder="➖ Letting go of..."
-                value={reset.reflection.wantLess}
-                onChange={(e) => updateReset({ reflection: { ...reset.reflection, wantLess: e.target.value } })}
-              />
+              <div className="relative">
+                <textarea
+                  className="w-full h-24 p-4 pr-12 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none focus:ring-1 focus:ring-[#BE185D] text-sm italic"
+                  placeholder="➖ Letting go of..."
+                  value={reset.reflection.wantLess}
+                  onChange={(e) => updateReset({ reflection: { ...reset.reflection, wantLess: e.target.value } })}
+                />
+                <div className="absolute right-3 top-3">
+                  <MicButton onTranscript={(text) => updateReset({ reflection: { ...reset.reflection, wantLess: (reset.reflection.wantLess ? reset.reflection.wantLess + ' ' : '') + text } })} />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -247,12 +268,17 @@ const MonthlyReset: React.FC<Props> = ({ data, updateData, isPremium, userName }
              </div>
              <div className="space-y-4">
                 <label className="text-sm font-bold text-gray-600">Goals for next month</label>
-                <textarea 
-                  className="w-full h-full min-h-[250px] p-6 bg-[#F8F7FC] border border-[#eee] rounded-3xl outline-none focus:ring-1 focus:ring-[#D4AF37] text-sm italic leading-relaxed"
-                  placeholder="⭐ What big shifts are we focusing on? Specific, actionable targets..."
-                  value={reset.intentions.goals}
-                  onChange={(e) => updateReset({ intentions: { ...reset.intentions, goals: e.target.value } })}
-                />
+                <div className="relative">
+                  <textarea
+                    className="w-full h-full min-h-[250px] p-6 pr-14 bg-[#F8F7FC] border border-[#eee] rounded-3xl outline-none focus:ring-1 focus:ring-[#D4AF37] text-sm italic leading-relaxed"
+                    placeholder="⭐ What big shifts are we focusing on? Specific, actionable targets..."
+                    value={reset.intentions.goals}
+                    onChange={(e) => updateReset({ intentions: { ...reset.intentions, goals: e.target.value } })}
+                  />
+                  <div className="absolute right-4 top-4">
+                    <MicButton onTranscript={(text) => updateReset({ intentions: { ...reset.intentions, goals: (reset.intentions.goals ? reset.intentions.goals + ' ' : '') + text } })} />
+                  </div>
+                </div>
              </div>
           </div>
         </section>
@@ -342,22 +368,32 @@ const MonthlyReset: React.FC<Props> = ({ data, updateData, isPremium, userName }
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs font-bold text-gray-500">Best financial decision I made</label>
-                    <textarea 
-                      className="w-full h-32 p-4 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none text-sm italic"
-                      placeholder="Setting a boundary? Buying quality over quantity? Canceling a service?"
-                      value={reset.financialCheckIn.bestDecision}
-                      onChange={(e) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, bestDecision: e.target.value } })}
-                    />
+                    <div className="relative">
+                      <textarea
+                        className="w-full h-32 p-4 pr-12 bg-[#F8F7FC] border border-[#eee] rounded-2xl outline-none text-sm italic"
+                        placeholder="Setting a boundary? Buying quality over quantity? Canceling a service?"
+                        value={reset.financialCheckIn.bestDecision}
+                        onChange={(e) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, bestDecision: e.target.value } })}
+                      />
+                      <div className="absolute right-3 top-3">
+                        <MicButton onTranscript={(text) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, bestDecision: (reset.financialCheckIn.bestDecision ? reset.financialCheckIn.bestDecision + ' ' : '') + text } })} />
+                      </div>
+                    </div>
                   </div>
                </div>
                <div className="space-y-2">
                   <label className="text-xs font-bold text-gray-500">One thing I'd do differently</label>
-                  <textarea 
-                    className="w-full h-full min-h-[150px] p-6 bg-[#F8F7FC] border border-[#eee] rounded-[32px] outline-none text-sm italic leading-relaxed"
-                    placeholder="Reflecting on missed opportunities for better flow..."
-                    value={reset.financialCheckIn.doDifferently}
-                    onChange={(e) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, doDifferently: e.target.value } })}
-                  />
+                  <div className="relative">
+                    <textarea
+                      className="w-full h-full min-h-[150px] p-6 pr-14 bg-[#F8F7FC] border border-[#eee] rounded-[32px] outline-none text-sm italic leading-relaxed"
+                      placeholder="Reflecting on missed opportunities for better flow..."
+                      value={reset.financialCheckIn.doDifferently}
+                      onChange={(e) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, doDifferently: e.target.value } })}
+                    />
+                    <div className="absolute right-4 top-4">
+                      <MicButton onTranscript={(text) => updateReset({ financialCheckIn: { ...reset.financialCheckIn, doDifferently: (reset.financialCheckIn.doDifferently ? reset.financialCheckIn.doDifferently + ' ' : '') + text } })} />
+                    </div>
+                  </div>
                </div>
             </div>
           </div>

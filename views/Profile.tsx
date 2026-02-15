@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
-import { User, Mail, DollarSign, Bell, Save, CheckCircle2, Loader2, Shield, Download, Upload, FileText, Printer } from 'lucide-react';
+import React, { useState } from 'react';
+import { User, Mail, DollarSign, Bell, Save, CheckCircle2, Loader2, Shield, Download, FileText, Printer, LogOut } from 'lucide-react';
 import ButterflyIcon from '../components/ButterflyIcon';
+import MicButton from '../components/MicButton';
+import { authService } from '../services/authService';
 
 interface ProfileProps {
   profile: any;
@@ -21,9 +23,6 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [importStatus, setImportStatus] = useState<'idle' | 'importing' | 'success' | 'error'>('idle');
-  const [importMessage, setImportMessage] = useState('');
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isPremium = profile?.is_premium;
   const avatarUrl = user?.user_metadata?.avatar_url || profile?.avatar_url || null;
@@ -104,37 +103,6 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
     window.print();
   };
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setImportStatus('importing');
-    setImportMessage('');
-
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
-
-      if (!data._meta?.app || data._meta.app !== 'Lavender Life Planner') {
-        setImportStatus('error');
-        setImportMessage('This file does not appear to be a Lavender Life Planner export.');
-        return;
-      }
-
-      await onImportData(data);
-      setImportStatus('success');
-      setImportMessage(`Imported successfully! (exported ${new Date(data._meta.exportDate).toLocaleDateString()})`);
-      setTimeout(() => setImportStatus('idle'), 4000);
-    } catch (err: any) {
-      console.error('Import failed:', err);
-      setImportStatus('error');
-      setImportMessage(err?.message || 'Failed to parse file. Make sure it is a valid JSON export.');
-    }
-
-    // Reset file input so same file can be re-selected
-    if (fileInputRef.current) fileInputRef.current.value = '';
-  };
-
   const currencies = [
     { code: 'USD', symbol: '$', name: 'US Dollar' },
     { code: 'EUR', symbol: '€', name: 'Euro' },
@@ -147,7 +115,7 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+    <div className="max-w-3xl mx-auto space-y-8 pb-20">
       <header>
         <h1 className="text-4xl font-bold serif text-[#7B68A6] mb-1">My Profile</h1>
         <p className="text-gray-500 italic">Manage your account and preferences</p>
@@ -217,12 +185,17 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
 
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Bio / About Me</label>
-            <textarea
-              className="w-full bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B19CD9] resize-none h-24"
-              value={bio}
-              onChange={e => setBio(e.target.value)}
-              placeholder="Tell us a little about yourself..."
-            />
+            <div className="relative">
+              <textarea
+                className="w-full bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-[#B19CD9] resize-none h-24"
+                value={bio}
+                onChange={e => setBio(e.target.value)}
+                placeholder="Tell us a little about yourself..."
+              />
+              <div className="absolute right-3 top-3">
+                <MicButton onTranscript={(text) => setBio(prev => prev ? prev + ' ' + text : text)} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -249,12 +222,17 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
 
           <div>
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-2">Financial Goal Summary</label>
-            <textarea
-              className="w-full bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[#B19CD9] resize-none h-24"
-              value={financialGoalSummary}
-              onChange={e => setFinancialGoalSummary(e.target.value)}
-              placeholder="e.g., Save $10k for emergency fund, pay off student loans by 2027..."
-            />
+            <div className="relative">
+              <textarea
+                className="w-full bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl px-4 py-3 pr-12 outline-none focus:ring-2 focus:ring-[#B19CD9] resize-none h-24"
+                value={financialGoalSummary}
+                onChange={e => setFinancialGoalSummary(e.target.value)}
+                placeholder="e.g., Save $10k for emergency fund, pay off student loans by 2027..."
+              />
+              <div className="absolute right-3 top-3">
+                <MicButton onTranscript={(text) => setFinancialGoalSummary(prev => prev ? prev + ' ' + text : text)} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -287,82 +265,36 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
         </div>
       </div>
 
-      {/* Data Export / Import */}
+      {/* Data Export */}
       <div className="paper-card p-8 space-y-6">
         <h3 className="text-lg font-bold text-[#7B68A6] flex items-center gap-2">
-          <FileText size={20} /> Export & Import Data
+          <FileText size={20} /> Export Data
         </h3>
         <p className="text-sm text-gray-500 italic">
           Your data belongs to you. Export regularly to keep a personal backup.
         </p>
 
-        {/* Export Buttons */}
-        <div className="space-y-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Export</p>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <button
-              onClick={handleExportJSON}
-              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
-            >
-              <Download size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
-              <div className="text-left">
-                <p className="text-sm font-bold text-gray-700">Download as JSON</p>
-                <p className="text-[10px] text-gray-400">Full data backup — can be re-imported</p>
-              </div>
-            </button>
-            <button
-              onClick={handleExportPDF}
-              className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
-            >
-              <Printer size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
-              <div className="text-left">
-                <p className="text-sm font-bold text-gray-700">Download as PDF</p>
-                <p className="text-[10px] text-gray-400">Print-friendly summary view</p>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Import */}
-        <div className="space-y-3">
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Import</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
+        <div className="flex flex-col sm:flex-row gap-3">
           <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={importStatus === 'importing'}
-            className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white border-2 border-dashed border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#F8F7FC] transition-all disabled:opacity-50"
+            onClick={handleExportJSON}
+            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
           >
-            {importStatus === 'importing' ? (
-              <Loader2 size={20} className="text-[#B19CD9] animate-spin" />
-            ) : (
-              <Upload size={20} className="text-[#B19CD9]" />
-            )}
+            <Download size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
             <div className="text-left">
-              <p className="text-sm font-bold text-gray-700">
-                {importStatus === 'importing' ? 'Importing...' : 'Import from JSON'}
-              </p>
-              <p className="text-[10px] text-gray-400">Upload a previously exported .json file to restore your data</p>
+              <p className="text-sm font-bold text-gray-700">Download Backup</p>
+              <p className="text-[10px] text-gray-400">Full data backup as JSON</p>
             </div>
           </button>
-
-          {importStatus === 'success' && (
-            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
-              <CheckCircle2 size={16} className="text-green-500" />
-              <p className="text-sm text-green-700">{importMessage}</p>
+          <button
+            onClick={handleExportPDF}
+            className="flex-1 flex items-center justify-center gap-3 px-6 py-4 bg-[#F8F7FC] border-2 border-[#E6D5F0] rounded-2xl hover:border-[#B19CD9] hover:bg-[#E6D5F0]/30 transition-all group"
+          >
+            <Printer size={20} className="text-[#B19CD9] group-hover:text-[#7B68A6] transition-colors" />
+            <div className="text-left">
+              <p className="text-sm font-bold text-gray-700">Download as PDF</p>
+              <p className="text-[10px] text-gray-400">Print-friendly summary view</p>
             </div>
-          )}
-          {importStatus === 'error' && (
-            <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
-              <FileText size={16} className="text-red-400" />
-              <p className="text-sm text-red-600">{importMessage}</p>
-            </div>
-          )}
+          </button>
         </div>
       </div>
 
@@ -375,6 +307,19 @@ const Profile: React.FC<ProfileProps> = ({ profile, user, allYears, activeYearDa
         >
           {saving ? <Loader2 size={18} className="animate-spin" /> : saved ? <CheckCircle2 size={18} /> : <Save size={18} />}
           {saving ? 'Saving...' : saved ? 'Saved!' : 'Save Changes'}
+        </button>
+      </div>
+
+      {/* Sign Out */}
+      <div className="pt-4 border-t border-[#eee]">
+        <button
+          onClick={async () => {
+            await authService.signOut();
+          }}
+          className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-red-50 border border-red-200 text-red-500 font-bold rounded-2xl hover:bg-red-100 transition-all"
+        >
+          <LogOut size={18} />
+          Sign Out
         </button>
       </div>
     </div>
