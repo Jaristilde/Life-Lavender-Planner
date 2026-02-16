@@ -486,6 +486,42 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
         {/* 11. KANBAN BOARD — Lavender Sticky Notes */}
         <section className="bg-[#F8F7FC] p-8 space-y-8 border-t border-[#eee]">
           <h3 className="serif text-3xl font-bold text-[#7B68A6] text-center">My Task Board</h3>
+
+          {/* Move-to overlay (fixed position, no clipping issues) */}
+          {moveMenuOpen && (() => {
+            const allLabels: Record<string, string> = { todo: '📝 To Do', inProgress: '⏳ In Progress', done: '✅ Done', notes: '💭 Notes' };
+            const sourceCol = kanbanColumns.find(c => (metrics.kanban?.[c] || []).some(i => i.id === moveMenuOpen));
+            if (!sourceCol) return null;
+            const item = (metrics.kanban[sourceCol] || []).find(i => i.id === moveMenuOpen);
+            if (!item) return null;
+            return (
+              <div className="fixed inset-0 z-[200] bg-black/40 flex items-end justify-center p-4" onClick={() => setMoveMenuOpen(null)}>
+                <div className="w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+                  <div className="p-4 border-b border-[#eee] bg-[#F8F7FC]">
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Move note</p>
+                    <p className="text-sm font-bold text-[#7B68A6] mt-1 truncate">"{item.text || 'Untitled'}"</p>
+                  </div>
+                  <div className="p-2">
+                    {kanbanColumns.filter(c => c !== sourceCol).map(tc => (
+                      <button
+                        key={tc}
+                        onClick={() => { handleKanbanMove(sourceCol, moveMenuOpen!, tc); setMoveMenuOpen(null); }}
+                        className="w-full text-left px-4 py-3.5 text-sm font-bold text-[#7B68A6] hover:bg-[#F8F7FC] active:bg-[#E6D5F0] rounded-xl transition-colors"
+                      >
+                        {allLabels[tc]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="p-2 border-t border-[#eee]">
+                    <button onClick={() => setMoveMenuOpen(null)} className="w-full py-3 text-sm font-bold text-gray-400 active:text-gray-600 rounded-xl transition-colors">
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {(['todo', 'inProgress', 'done', 'notes'] as Array<keyof UserDailyMetrics['kanban']>).map(colKey => {
               const colLabels: Record<string, string> = {
@@ -529,50 +565,25 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                     {(metrics.kanban?.[colKey] || []).map(item => (
                       <div
                         key={item.id}
-                        draggable
-                        onDragStart={(e: React.DragEvent) => handleDragStart(e, item.id, colKey)}
-                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)] group hover:shadow-[3px_5px_12px_rgba(0,0,0,0.12)] hover:-translate-y-0.5 transition-all`}
+                        className={`${colors.note} border ${colors.noteBorder} rounded-xl p-3 shadow-[2px_3px_6px_rgba(0,0,0,0.08)]`}
                       >
-                        <div className="flex items-start gap-2">
-                          <textarea
-                            className="flex-1 bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
-                            placeholder="Write here..."
-                            value={item.text}
-                            rows={Math.max(2, Math.ceil((item.text.length || 1) / 25))}
-                            onChange={(e) => handleKanbanEdit(colKey, item.id, e.target.value)}
-                            onMouseDown={(e) => e.stopPropagation()}
-                            onTouchStart={(e) => e.stopPropagation()}
-                          />
-                        </div>
+                        <textarea
+                          className="w-full bg-transparent text-sm text-[#4A3D6B] font-medium leading-relaxed resize-none outline-none placeholder:text-[#B19CD9]/50 placeholder:italic min-h-[40px]"
+                          placeholder="Write here..."
+                          value={item.text}
+                          rows={Math.max(2, Math.ceil((item.text.length || 1) / 25))}
+                          onChange={(e) => handleKanbanEdit(colKey, item.id, e.target.value)}
+                        />
                         <div className="mt-2 flex items-center justify-between">
-                          {/* Move-to menu (works on all platforms including touch) */}
-                          <div className="relative">
-                            <button
-                              onClick={() => setMoveMenuOpen(moveMenuOpen === item.id ? null : item.id)}
-                              className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-bold text-[#7B68A6] bg-white/60 hover:bg-white transition-colors"
-                            >
-                              <ArrowRight size={12} /> Move
-                            </button>
-                            {moveMenuOpen === item.id && (
-                              <div className="absolute left-0 bottom-full mb-1 bg-white rounded-xl shadow-lg border border-[#E6D5F0] p-1.5 z-20 min-w-[130px]">
-                                {kanbanColumns.filter(c => c !== colKey).map(targetCol => (
-                                  <button
-                                    key={targetCol}
-                                    onClick={() => {
-                                      handleKanbanMove(colKey, item.id, targetCol);
-                                      setMoveMenuOpen(null);
-                                    }}
-                                    className="w-full text-left px-3 py-2 text-xs font-bold text-[#7B68A6] hover:bg-[#F8F7FC] rounded-lg transition-colors"
-                                  >
-                                    {colLabels[targetCol]}
-                                  </button>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                          <button
+                            onClick={() => setMoveMenuOpen(item.id)}
+                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold text-[#7B68A6] bg-white/70 active:bg-white transition-colors"
+                          >
+                            <ArrowRight size={12} /> Move
+                          </button>
                           <button
                             onClick={() => handleKanbanRemove(colKey, item.id)}
-                            className="p-2 rounded-full hover:bg-red-100 transition-colors"
+                            className="p-2 rounded-full hover:bg-red-100 active:bg-red-100 transition-colors"
                           >
                             <Trash2 size={14} className="text-red-300 hover:text-red-500" />
                           </button>
