@@ -12,6 +12,7 @@
     "build:ios": "vite build && npx cap sync ios"
   },
   "dependencies": {
+    "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/core": "^7.0.0",
     "@capacitor/ios": "^7.0.0",
     "@capacitor/splash-screen": "^7.0.0",
