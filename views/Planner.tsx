@@ -124,6 +124,12 @@ const DayBox = ({ dayKey, dayIndex, tasks, dayLabel, dayDate, onToggle, onEdit, 
   </div>
 );
 
+const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+};
+
 const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
   const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'daily'>('daily');
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -572,6 +578,7 @@ const Planner: React.FC<PlannerProps> = ({ data, updateData }) => {
                           placeholder="Write here..."
                           value={item.text}
                           rows={Math.max(2, Math.ceil((item.text.length || 1) / 25))}
+                          onFocus={handleInputFocus}
                           onChange={(e) => handleKanbanEdit(colKey, item.id, e.target.value)}
                         />
                         <div className="mt-2 flex items-center justify-between">

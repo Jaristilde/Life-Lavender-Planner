@@ -17,6 +17,12 @@ interface DashboardProps {
   feeling: string;
 }
 
+const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+};
+
 const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userName, mood, feeling }) => {
   const [personalAffirmations, setPersonalAffirmations] = useState<string[]>([]);
   const [greeting, setGreeting] = useState('');
@@ -134,6 +140,7 @@ const Dashboard: React.FC<DashboardProps> = ({ data, updateData, setView, userNa
                 className="w-full text-sm py-2 px-3 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl outline-none focus:ring-2 focus:ring-[#B19CD9]"
                 placeholder={['I am grateful for...', 'I appreciate...', 'I am thankful for...'][i]}
                 value={(todayMetrics.gratitude || ['', '', ''])[i] || ''}
+                onFocus={handleInputFocus}
                 onChange={(e) => {
                   const newGrat = [...(todayMetrics.gratitude || ['', '', ''])];
                   newGrat[i] = e.target.value;

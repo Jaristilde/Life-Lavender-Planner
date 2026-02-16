@@ -15,6 +15,12 @@ interface MorningResetProps {
   userName: string;
 }
 
+const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+};
+
 const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium, userName }) => {
   const today = new Date().toISOString().split('T')[0];
   const [greeting, setGreeting] = useState('');
@@ -185,6 +191,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
                     className="w-full bg-transparent border-b border-white/20 outline-none text-2xl serif italic placeholder:text-white/20 resize-none h-20 pr-12"
                     placeholder="I am walking with confidence..."
                     value={metrics.daily_intention || ''}
+                    onFocus={handleInputFocus}
                     onChange={(e) => updateMetrics({ daily_intention: e.target.value })}
                   />
                   <div className="absolute right-0 top-0">
@@ -274,11 +281,16 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
                 <div className="relative">
                   <span className="absolute -left-4 top-0 font-bold text-gray-400">$</span>
                   <input
-                    type="number"
+                    type="text"
+                    inputMode="decimal"
                     className="bg-transparent border-none outline-none font-bold text-3xl text-[#7B68A6] w-24 text-center"
                     placeholder="0"
                     value={metrics.financial_spending || ''}
-                    onChange={(e) => updateMetrics({ financial_spending: Number(e.target.value) })}
+                    onFocus={handleInputFocus}
+                    onChange={(e) => {
+                      const cleaned = e.target.value.replace(/[^0-9.]/g, '').replace(/^0+(?=\d)/, '');
+                      updateMetrics({ financial_spending: parseFloat(cleaned) || 0 });
+                    }}
                   />
                 </div>
               </div>
@@ -289,6 +301,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
                     className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic pr-10"
                     placeholder="e.g. Bringing my lunch today"
                     value={metrics.financial_intention || ''}
+                    onFocus={handleInputFocus}
                     onChange={(e) => updateMetrics({ financial_intention: e.target.value })}
                   />
                   <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -303,6 +316,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
                     className="w-full bg-transparent border-none outline-none text-center font-bold text-[#7B68A6] placeholder:text-gray-300 italic pr-10"
                     placeholder="e.g. My stable income"
                     value={metrics.financial_gratitude || ''}
+                    onFocus={handleInputFocus}
                     onChange={(e) => updateMetrics({ financial_gratitude: e.target.value })}
                   />
                   <div className="absolute right-0 top-1/2 -translate-y-1/2">
@@ -353,6 +367,7 @@ const MorningReset: React.FC<MorningResetProps> = ({ data, updateData, isPremium
                     className={`flex-1 bg-transparent outline-none font-medium ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}`}
                     placeholder="What's important today?"
                     value={task.text}
+                    onFocus={handleInputFocus}
                     onChange={(e) => updatePriorityText(task.id, e.target.value)}
                   />
                   <div className="flex items-center gap-2">

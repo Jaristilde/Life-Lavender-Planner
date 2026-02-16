@@ -4,6 +4,12 @@ import { YearData } from '../types';
 import { History, Award, Heart, BookOpen, Download } from 'lucide-react';
 import MicButton from '../components/MicButton';
 
+const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+};
+
 const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void }> = ({ data, updateData }) => {
   const updateReflections = (newR: Partial<typeof data.reflections>) => {
     updateData({ ...data, reflections: { ...data.reflections, ...newR } });
@@ -32,6 +38,7 @@ const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void 
               className="w-full min-h-[150px] p-6 pr-14 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
               placeholder="What are the wins that made you proud this year?"
               value={data.reflections.lessons}
+              onFocus={handleInputFocus}
               onChange={(e) => updateReflections({ lessons: e.target.value })}
             />
             <div className="absolute right-4 top-4">
@@ -50,6 +57,7 @@ const Reflections: React.FC<{ data: YearData; updateData: (d: YearData) => void 
               className="w-full min-h-[150px] p-6 pr-14 bg-[#F8F7FC] border border-[#E6D5F0] rounded-2xl italic text-lg outline-none focus:ring-2 focus:ring-[#B19CD9]"
               placeholder="Who and what are you most grateful for?"
               value={data.reflections.gratitude}
+              onFocus={handleInputFocus}
               onChange={(e) => updateReflections({ gratitude: e.target.value })}
             />
             <div className="absolute right-4 top-4">

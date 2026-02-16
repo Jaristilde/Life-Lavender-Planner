@@ -11,6 +11,18 @@ interface FinancialHubProps {
   isArchived?: boolean;
 }
 
+const handleInputFocus = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  setTimeout(() => {
+    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 300);
+};
+
+const parseMoneyInput = (value: string): number => {
+  const cleaned = value.replace(/[^0-9.]/g, '');
+  const noLeadingZeros = cleaned.replace(/^0+(?=\d)/, '');
+  return parseFloat(noLeadingZeros) || 0;
+};
+
 const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinancialData, isPremium, isArchived }) => {
   const [loadingAI, setLoadingAI] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -37,7 +49,7 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
   };
 
   const handleIncomeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateFinancial({ income: Number(e.target.value) });
+    updateFinancial({ income: parseMoneyInput(e.target.value) });
   };
 
   const handleAddExpense = () => {
@@ -115,12 +127,16 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
             <label className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2 block">Total Monthly Income</label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">$</span>
-              <input 
-                type="number" 
-                value={f.income ?? 0}
+              <input
+                type="text"
+                inputMode="decimal"
+                value={f.income || ''}
+                placeholder="0"
                 readOnly={isArchived}
                 onChange={handleIncomeChange}
+                onFocus={handleInputFocus}
                 className="w-full pl-10 pr-4 py-3 bg-[#F8F7FC] border border-[#E6D5F0] rounded-xl text-xl font-bold focus:ring-2 focus:ring-[#B19CD9] outline-none"
+                style={{ fontSize: '16px' }}
               />
             </div>
           </div>
@@ -167,10 +183,11 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
               <div className="space-y-3">
                 {(fixedExpenses || []).map((exp, idx) => (
                   <div key={exp?.id || idx} className="flex items-center gap-4 bg-[#F8F7FC] p-3 rounded-xl border border-transparent hover:border-[#E6D5F0] transition-all">
-                    <input 
+                    <input
                       className="flex-1 bg-transparent border-none outline-none font-medium"
                       value={exp?.name || ''}
                       readOnly={isArchived}
+                      onFocus={handleInputFocus}
                       onChange={(e) => {
                         const newList = [...(f.fixedExpenses ?? [])];
                         newList[idx] = { ...newList[idx], name: e.target.value };
@@ -179,14 +196,17 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                     />
                     <div className="relative">
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
-                      <input 
-                        type="number"
+                      <input
+                        type="text"
+                        inputMode="decimal"
                         className="w-24 pl-6 pr-3 py-1 bg-white border border-[#E6D5F0] rounded-lg outline-none focus:ring-1 focus:ring-[#B19CD9]"
-                        value={exp?.amount ?? 0}
+                        value={exp?.amount || ''}
+                        placeholder="0"
                         readOnly={isArchived}
+                        onFocus={handleInputFocus}
                         onChange={(e) => {
                           const newList = [...(f.fixedExpenses ?? [])];
-                          newList[idx] = { ...newList[idx], amount: Number(e.target.value) };
+                          newList[idx] = { ...newList[idx], amount: parseMoneyInput(e.target.value) };
                           updateFinancial({ fixedExpenses: newList });
                         }}
                       />
@@ -212,10 +232,11 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                 {(variableExpenses || []).map((exp, idx) => (
                   <div key={exp?.id || idx} className="paper-card p-4 bg-white border-[#E6D5F0] hover:shadow-md transition-shadow">
                     <div className="flex justify-between mb-3">
-                      <input 
+                      <input
                         className="font-bold text-gray-700 bg-transparent border-none focus:outline-none"
                         value={exp?.name || ''}
                         readOnly={isArchived}
+                        onFocus={handleInputFocus}
                         onChange={(e) => {
                           const newList = [...(f.variableExpenses ?? [])];
                           newList[idx] = { ...newList[idx], name: e.target.value };
@@ -233,28 +254,34 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                     <div className="flex gap-4">
                       <div className="flex-1">
                         <label className="text-[10px] uppercase font-bold text-gray-400">Budget</label>
-                        <input 
-                          type="number"
+                        <input
+                          type="text"
+                          inputMode="decimal"
                           className="w-full text-sm font-medium border-b border-[#eee] focus:border-[#B19CD9] outline-none pb-1"
-                          value={exp?.budget ?? 0}
+                          value={exp?.budget || ''}
+                          placeholder="0"
                           readOnly={isArchived}
+                          onFocus={handleInputFocus}
                           onChange={(e) => {
                             const newList = [...(f.variableExpenses ?? [])];
-                            newList[idx] = { ...newList[idx], budget: Number(e.target.value) };
+                            newList[idx] = { ...newList[idx], budget: parseMoneyInput(e.target.value) };
                             updateFinancial({ variableExpenses: newList });
                           }}
                         />
                       </div>
                       <div className="flex-1">
                         <label className="text-[10px] uppercase font-bold text-gray-400">Actual</label>
-                        <input 
-                          type="number"
+                        <input
+                          type="text"
+                          inputMode="decimal"
                           className="w-full text-sm font-medium border-b border-[#eee] focus:border-[#B19CD9] outline-none pb-1"
-                          value={exp?.amount ?? 0}
+                          value={exp?.amount || ''}
+                          placeholder="0"
                           readOnly={isArchived}
+                          onFocus={handleInputFocus}
                           onChange={(e) => {
                             const newList = [...(f.variableExpenses ?? [])];
-                            newList[idx] = { ...newList[idx], amount: Number(e.target.value) };
+                            newList[idx] = { ...newList[idx], amount: parseMoneyInput(e.target.value) };
                             updateFinancial({ variableExpenses: newList });
                           }}
                         />
@@ -305,10 +332,11 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {(debts || []).map((debt, idx) => (
               <div key={debt?.id || idx} className="paper-card p-6 bg-gradient-to-br from-white to-[#F8F7FC] border-[#E6D5F0]">
-                <input 
+                <input
                   className="text-lg font-bold bg-transparent border-none outline-none mb-4 w-full"
                   value={debt?.name || ''}
                   readOnly={isArchived}
+                  onFocus={handleInputFocus}
                   onChange={(e) => {
                     const newList = [...(f.debts ?? [])];
                     newList[idx] = { ...newList[idx], name: e.target.value };
@@ -318,14 +346,17 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-400 uppercase">Balance</span>
-                    <input 
-                      type="number"
+                    <input
+                      type="text"
+                      inputMode="decimal"
                       className="w-24 text-right font-bold border-b border-transparent focus:border-[#B19CD9] outline-none"
-                      value={debt?.balance ?? 0}
+                      value={debt?.balance || ''}
+                      placeholder="0"
                       readOnly={isArchived}
+                      onFocus={handleInputFocus}
                       onChange={(e) => {
                         const newList = [...(f.debts ?? [])];
-                        newList[idx] = { ...newList[idx], balance: Number(e.target.value) };
+                        newList[idx] = { ...newList[idx], balance: parseMoneyInput(e.target.value) };
                         updateFinancial({ debts: newList });
                       }}
                     />
@@ -333,14 +364,17 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
                   <div className="flex justify-between items-center">
                     <span className="text-xs font-bold text-gray-400 uppercase">Interest Rate</span>
                     <div className="flex items-center">
-                      <input 
-                        type="number"
+                      <input
+                        type="text"
+                        inputMode="decimal"
                         className="w-12 text-right text-sm border-b border-transparent focus:border-[#B19CD9] outline-none"
-                        value={debt?.interestRate ?? 0}
+                        value={debt?.interestRate || ''}
+                        placeholder="0"
                         readOnly={isArchived}
+                        onFocus={handleInputFocus}
                         onChange={(e) => {
                           const newList = [...(f.debts ?? [])];
-                          newList[idx] = { ...newList[idx], interestRate: Number(e.target.value) };
+                          newList[idx] = { ...newList[idx], interestRate: parseMoneyInput(e.target.value) };
                           updateFinancial({ debts: newList });
                         }}
                       />
@@ -375,20 +409,27 @@ const FinancialHub: React.FC<FinancialHubProps> = ({ financialData, updateFinanc
             <div className="space-y-4">
               <div>
                 <label className="text-xs font-bold text-gray-400 uppercase">Name</label>
-                <input 
+                <input
                   className="w-full p-4 bg-[#F8F7FC] border rounded-2xl outline-none"
                   value={newExpenseForm.name}
+                  onFocus={handleInputFocus}
                   onChange={e => setNewExpenseForm({...newExpenseForm, name: e.target.value})}
                 />
               </div>
               <div className="flex gap-4">
                  <div className="flex-1">
                    <label className="text-xs font-bold text-gray-400 uppercase">Budget/Amount</label>
-                   <input 
-                    type="number"
+                   <input
+                    type="text"
+                    inputMode="decimal"
                     className="w-full p-4 bg-[#F8F7FC] border rounded-2xl outline-none"
-                    value={newExpenseForm.budget}
-                    onChange={e => setNewExpenseForm({...newExpenseForm, budget: Number(e.target.value), amount: Number(e.target.value)})}
+                    value={newExpenseForm.budget || ''}
+                    placeholder="0"
+                    onFocus={handleInputFocus}
+                    onChange={e => {
+                      const val = parseMoneyInput(e.target.value);
+                      setNewExpenseForm({...newExpenseForm, budget: val, amount: val});
+                    }}
                    />
                  </div>
                  <div className="flex-1">

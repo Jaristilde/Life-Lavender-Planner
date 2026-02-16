@@ -54,6 +54,21 @@ const App: React.FC = () => {
   useEffect(() => {
     CapSplash.hide().catch(() => {});
   }, []);
+
+  // BUG 2 FIX — Dismiss keyboard when tapping outside input/textarea
+  useEffect(() => {
+    const handleTouchStart = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA' && target.tagName !== 'SELECT') {
+        const active = document.activeElement as HTMLElement;
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+          active.blur();
+        }
+      }
+    };
+    document.addEventListener('touchstart', handleTouchStart);
+    return () => document.removeEventListener('touchstart', handleTouchStart);
+  }, []);
   const splashFinished = useRef(false);
 
   const finishSplash = () => {

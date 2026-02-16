@@ -36,6 +36,12 @@ button:has(svg) {
   min-height: 44px;
 }
 
+/* iOS FIX — Scrollable content when keyboard is open */
+main, .page-content, [class*="pageContent"] {
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+}
+
 /* Fallback: ensure all interactive touch targets meet iOS HIG 44px minimum */
 @supports (-webkit-touch-callout: none) {
   button, [role="button"] {

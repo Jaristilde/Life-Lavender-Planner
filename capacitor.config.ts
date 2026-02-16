@@ -20,8 +20,8 @@ const config: CapacitorConfig = {
       showSpinner: false
     },
     Keyboard: {
-      resize: 'none',
-      scrollPadding: false
+      resize: 'body',
+      scrollPadding: true
     }
   }
 };
